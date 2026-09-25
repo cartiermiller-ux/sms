@@ -52,9 +52,9 @@
 		}
 	},
 	"tabBar": { //底部
-		"color": "#667781",
+		"color": "#8696A0",
 		"selectedColor": "#2F8FE5",
-		"borderStyle": "white",
+		"borderStyle": "black",
 		"backgroundColor": "#ffffff",
 		"list": [{
 				"pagePath": "wx/tabbar1/index",

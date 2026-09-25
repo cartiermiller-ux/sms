@@ -1,5 +1,6 @@
-﻿# 生成 Msm 品牌底部 Tab 图标（24px 线性风格，81×81 输出）
-#   未选中 #667781  /  选中 #2F8FE5 (Msm Blue)
+﻿# 生成 Msm 底部 Tab 图标（24px 线性风格，81×81 输出）
+#   V2EX 配色：未选中 #999999  /  选中 #333333
+#   （旧配色为 #667781 / #2F8FE5 的 Msm Blue 方案，已废弃）
 Add-Type -AssemblyName System.Drawing
 
 $out = "C:\我的下载\Uniapp+SpringBoot即时通讯APP源码 安卓iOS跨端\_deploy\frontend\src\static\msm\tab"
@@ -80,7 +81,7 @@ $icons = @(
   @{ Name = 'me';       Fn = 'Path-Me'       }
 )
 $variants = @(
-  @{ Suffix = '';    Color = '#667781' },
+  @{ Suffix = '';    Color = '#8696A0' },
   @{ Suffix = '-on'; Color = '#2F8FE5' }
 )
 

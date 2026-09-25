@@ -9,9 +9,7 @@
 
 		<!-- 品牌头 -->
 		<view class="auth__head">
-			<view class="auth__logo">
-				<text class="auth__logo-m">M</text><text class="auth__logo-sm">sm</text>
-			</view>
+			<image class="auth__logo" src="../../static/msm/logo.png" mode="aspectFit"></image>
 			<view class="auth__title">欢迎回来</view>
 			<view class="auth__sub">登录继续使用 Msm</view>
 		</view>
@@ -25,7 +23,7 @@
 					<view class="field__sep"></view>
 					<input class="field__input" maxlength="11" type="text" placeholder="请输入手机号码" placeholder-class="field__ph" name="phone" v-model="form.phone" />
 					<view class="field__suffix" v-if="form.phone" @click="form.phone = ''">
-						<uni-icons type="clear" size="18" color="#B7C2CB"></uni-icons>
+						<uni-icons type="clear" size="18" color="#8696A0"></uni-icons>
 					</view>
 				</view>
 			</view>
@@ -58,7 +56,7 @@
 			<!-- 协议 -->
 			<view class="auth__agree">
 				<view class="auth__agree-tap" @click="agree = !agree">
-					<checkbox style="transform:scale(0.6);pointer-events:none" :checked="agree" />
+					<checkbox style="transform:scale(0.6);pointer-events:none" :checked="agree" color="#2F8FE5" />
 					<text class="auth__agree-text">我已阅读并同意</text>
 				</view>
 				<text class="auth__agree-link" @click="goagreement()">《隐私及服务协议》</text>
@@ -342,6 +340,6 @@
 </script>
 
 <style lang="scss" scoped>
-	/* 认证页共用样式：白底 + Msm Blue */
+	/* 认证页共用样式：白底 + 中性灰（V2EX 风） */
 	@import '@/common/msm-auth.scss';
 </style>

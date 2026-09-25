@@ -1,24 +1,24 @@
 <template>
 	<view class="msm-page">
-		<!-- ============ 品牌导航栏 ============ -->
+		<!-- ============ 导航栏 ============ -->
 		<view class="msm-header">
 			<view class="msm-header__bar">
 				<view class="msm-header__left">
-					<view class="msm-header__brand">通讯录</view>
+					<view class="msm-header__title">通讯录</view>
 					<view class="msm-header__sub">{{ totalCount }} 位联系人</view>
 				</view>
 				<view class="msm-header__actions">
 					<view class="msm-icon-btn" @click="focusSearch">
-						<uni-icons type="search" size="21" color="#667781"></uni-icons>
+						<uni-icons type="search" size="20" color="#667781"></uni-icons>
 					</view>
 					<view class="msm-icon-btn" @click="openMore">
-						<uni-icons type="personadd" size="21" color="#2F8FE5"></uni-icons>
+						<uni-icons type="personadd" size="20" color="#111B21"></uni-icons>
 					</view>
 				</view>
 			</view>
 
 			<view class="msm-search">
-				<uni-icons class="msm-search__icon" type="search" size="16" color="#8696A0"></uni-icons>
+				<uni-icons class="msm-search__icon" type="search" size="15" color="#8696A0"></uni-icons>
 				<input
 					class="msm-search__input"
 					v-model="keyword"
@@ -28,72 +28,89 @@
 					confirm-type="search"
 				/>
 				<view v-if="keyword" class="msm-search__clear" @click="keyword = ''">
-					<uni-icons type="clear" size="16" color="#8696A0"></uni-icons>
+					<uni-icons type="clear" size="15" color="#8696A0"></uni-icons>
 				</view>
 			</view>
 		</view>
 
-		<!-- ============ 快速入口 ============ -->
-		<view v-if="!keyword" class="quick">
-			<view class="quick__item" @click="goNewFriends">
-				<view class="quick__icon">
-					<uni-icons type="personadd" size="20" color="#2F8FE5"></uni-icons>
+		<!-- ============ 快速入口（V2EX 式菜单行，不再是三宫格彩色图标） ============ -->
+		<view v-if="!keyword" class="entry">
+			<msm-card>
+				<view class="msm-row msm-row--tappable" @click="goNewFriends">
+					<view class="msm-row__icon">
+						<uni-icons type="personadd" size="19" color="#667781"></uni-icons>
+					</view>
+					<view class="msm-row__body">
+						<view class="msm-row__title msm-row__title--plain">新朋友</view>
+					</view>
+					<view v-if="applyCount > 0" class="msm-badge msm-badge--row">{{ badgeText(applyCount) }}</view>
+					<uni-icons class="msm-arrow" type="arrowright" size="13" color="#8696A0"></uni-icons>
 				</view>
-				<view class="quick__label">新朋友</view>
-				<view v-if="applyCount > 0" class="quick__dot"></view>
-			</view>
-			<view class="quick__item" @click="goGroups">
-				<view class="quick__icon">
-					<uni-icons type="staff" size="20" color="#2F8FE5"></uni-icons>
+
+				<view class="msm-row msm-row--tappable" @click="goGroups">
+					<view class="msm-row__icon">
+						<uni-icons type="staff" size="19" color="#667781"></uni-icons>
+					</view>
+					<view class="msm-row__body">
+						<view class="msm-row__title msm-row__title--plain">群聊</view>
+					</view>
+					<uni-icons class="msm-arrow" type="arrowright" size="13" color="#8696A0"></uni-icons>
 				</view>
-				<view class="quick__label">群聊</view>
-			</view>
-			<view class="quick__item" @click="goScan">
-				<view class="quick__icon">
-					<uni-icons type="scan" size="20" color="#2F8FE5"></uni-icons>
+
+				<view class="msm-row msm-row--tappable" @click="goScan">
+					<view class="msm-row__icon">
+						<uni-icons type="scan" size="19" color="#667781"></uni-icons>
+					</view>
+					<view class="msm-row__body">
+						<view class="msm-row__title msm-row__title--plain">扫一扫</view>
+					</view>
+					<uni-icons class="msm-arrow" type="arrowright" size="13" color="#8696A0"></uni-icons>
 				</view>
-				<view class="quick__label">扫一扫</view>
-			</view>
+			</msm-card>
 		</view>
 
-		<!-- ============ 联系人（字母分组，不用卡片，直接铺在页面上） ============ -->
-		<block v-if="groups.length">
+		<!-- ============ 联系人（字母分组，通栏白底行 + 1px 分隔线） ============ -->
+		<msm-list
+			:items="groups"
+			:empty-title="keyword ? '没有找到联系人' : '通讯录还是空的'"
+			:empty-desc="keyword ? '换个关键词试试' : '添加好友后，联系人会按拼音自动分组'"
+			:empty-icon="keyword ? 'search' : 'staff'"
+		>
 			<view v-for="(g, gi) in groups" :key="gi" class="letter-group">
-				<view class="letter">{{ g.letter }}</view>
+				<view class="msm-section">{{ g.letter }}</view>
 				<view class="contact-list">
 					<view
 						v-for="(c, ci) in g.data"
 						:key="c.userId"
-						class="contact"
+						class="msm-row msm-row--tappable"
 						@click="openContact(c)"
 					>
-						<image class="contact__avatar" :src="c.avatar" mode="aspectFill"></image>
-						<view class="contact__body">
-							<view class="contact__name">{{ c.name }}</view>
-							<view v-if="c.chatNo" class="contact__no">Msm ID：{{ c.chatNo }}</view>
+						<view class="msm-row__avatar">
+							<image class="contact__avatar-img" :src="c.avatar" mode="aspectFill"></image>
 						</view>
-						<uni-icons class="msm-arrow" type="arrowright" size="14" color="#C4CDD3"></uni-icons>
+						<view class="msm-row__body">
+							<view class="msm-row__title">{{ c.name }}</view>
+							<view v-if="c.chatNo" class="msm-row__meta">Msm ID：{{ c.chatNo }}</view>
+						</view>
+						<uni-icons class="msm-arrow" type="arrowright" size="13" color="#8696A0"></uni-icons>
 					</view>
 				</view>
 			</view>
-			<view class="list-tail"></view>
-		</block>
 
-		<!-- ============ 空状态 ============ -->
-		<view v-else class="msm-empty">
-			<view class="msm-empty__art">
-				<uni-icons type="staff" size="44" color="#2F8FE5"></uni-icons>
-			</view>
-			<view class="msm-empty__title">{{ keyword ? '没有找到联系人' : '通讯录还是空的' }}</view>
-			<view class="msm-empty__desc">{{ keyword ? '换个关键词试试' : '添加好友后，联系人会按拼音自动分组' }}</view>
-			<view v-if="!keyword" class="msm-btn" @click="openMore">添加好友</view>
-		</view>
+			<template #empty>
+				<view v-if="!keyword" class="msm-empty__action" @click="openMore">
+					<view class="msm-btn msm-btn--sm">添加好友</view>
+				</view>
+			</template>
+		</msm-list>
 
 		<top-right-tool-wx ref="trtw"></top-right-tool-wx>
 	</view>
 </template>
 
 <script>
+import { formatCount } from '@/common/msm-format.js';
+
 export default {
 	data() {
 		return {
@@ -132,6 +149,9 @@ export default {
 		this.$store.dispatch('tabBarpull');
 	},
 	methods: {
+		badgeText(n) {
+			return formatCount(n) || String(n);
+		},
 		focusSearch() {
 			this.keyword = '';
 		},
@@ -179,158 +199,47 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.msm-page {
-	min-height: 100vh;
-	background: var(--msm-background);
-	padding-bottom: 16px;
-}
+	/* ============================================================
+	   通讯录页 —— V2EX 风格
+	   行、头像、角标等基础件在 App.vue 全局样式里。
+	   ============================================================ */
+	.msm-page {
+		min-height: 100vh;
+		background: var(--msm-background);
+		padding-bottom: 16px;
+	}
 
-.msm-search__input {
-	flex: 1;
-	min-width: 0;
-	font-size: 14.5px;
-	color: var(--msm-text);
-	background: transparent;
-}
+	.msm-search__input {
+		flex: 1;
+		min-width: 0;
+		font-size: 13px;
+		color: var(--msm-text);
+		background: transparent;
+	}
 
-.msm-search__ph {
-	color: var(--msm-text-muted);
-	font-size: 14.5px;
-}
+	.msm-search__ph {
+		color: var(--msm-text-faint);
+		font-size: 13px;
+	}
 
-.msm-search__clear {
-	padding-left: 6px;
-}
+	.msm-search__clear {
+		padding-left: 6px;
+	}
 
-/* ---------- 快速入口 ---------- */
-.quick {
-	display: flex;
-	margin: 10px 12px 4px;
-	background: var(--msm-surface);
-	border-radius: var(--msm-radius-md);
-	overflow: hidden;
-}
+	/* ---------- 快速入口卡片 ---------- */
+	.entry {
+		margin-top: 10px;
+	}
 
-.quick__item {
-	position: relative;
-	flex: 1;
-	padding: 13px 6px 11px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
+	/* ---------- 联系人的头像图片本体 ---------- */
+	.contact__avatar-img {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
 
-.quick__item:active {
-	background: var(--msm-surface-sunken);
-}
-
-.quick__icon {
-	width: 40px;
-	height: 40px;
-	border-radius: 11px;
-	background: var(--msm-primary-light);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.quick__label {
-	margin-top: 7px;
-	font-size: 12.5px;
-	color: var(--msm-text);
-}
-
-.quick__dot {
-	position: absolute;
-	top: 11px;
-	right: 50%;
-	margin-right: -26px;
-	width: 7px;
-	height: 7px;
-	border-radius: 50%;
-	background: var(--msm-danger);
-}
-
-/* ---------- 字母分组（IOS/Telegram 式：字母在灰底上，联系人行白底通栏）---------- */
-.letter-group {
-	margin-top: 0;
-}
-
-.letter {
-	padding: 12px 20px 5px;
-	font-size: 12px;
-	font-weight: 600;
-	color: var(--msm-text-muted);
-	letter-spacing: .5px;
-	background: var(--msm-background);
-}
-
-.contact-list {
-	background: var(--msm-surface);
-}
-
-.contact {
-	position: relative;
-	display: flex;
-	align-items: center;
-	height: 64px;
-	padding: 0 16px;
-	background: var(--msm-surface);
-	box-sizing: border-box;
-}
-
-.contact:active {
-	background: var(--msm-surface-sunken);
-}
-
-.contact::after {
-	content: '';
-	position: absolute;
-	left: 72px;
-	right: 0;
-	bottom: 0;
-	height: 1px;
-	background: var(--msm-divider);
-	transform: scaleY(0.5);
-}
-
-.contact:last-child::after {
-	display: none;
-}
-
-.contact__avatar {
-	width: 44px;
-	height: 44px;
-	border-radius: 22px;
-	margin-right: 12px;
-	flex-shrink: 0;
-	background: var(--msm-surface-sunken);
-}
-
-.contact__body {
-	flex: 1;
-	min-width: 0;
-}
-
-.contact__name {
-	font-size: 15px;
-	color: var(--msm-text);
-	line-height: 1.25;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.contact__no {
-	margin-top: 2px;
-	font-size: 12px;
-	color: var(--msm-text-muted);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.list-tail {
-	height: 16px;
-}
+	/* ---------- 空状态行动按钮 ---------- */
+	.msm-empty__action {
+		margin-top: 18px;
+	}
 </style>

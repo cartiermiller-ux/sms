@@ -4,14 +4,16 @@
 #      —— 本地 uni build -p app 产出的是源码格式，原生侧读不懂，会导致 tabBar/launch_path 丢失
 #   3) 同证书重签（SHA1 不变）
 param(
-    [string]$BaseApk  = "C:\我的下载\Uniapp+SpringBoot即时通讯APP源码 安卓iOS跨端\_deploy\android-webview\Msm-1.3.0-Compact.apk",
+    [string]$BaseApk  = "C:\我的下载\Uniapp+SpringBoot即时通讯APP源码 安卓iOS跨端\_deploy\android-webview\Msm-1.3.1-修正版.apk",
     [string]$RuntimeManifestSrc = "C:\我的下载\Uniapp+SpringBoot即时通讯APP源码 安卓iOS跨端\_deploy\android-webview\Msm-正式版-v1.2.0.apk",
     [string]$AppDist   = "C:\im-local\hx-frontend\dist\build\app",
-    [string]$OutApk    = "C:\im-local\Msm-1.3.1.apk",
+    [string]$OutApk    = "C:\im-local\Msm-1.4.0-V2EX.apk",
     [string]$Keystore  = "C:\im-local\app-cert.keystore",
     [string]$Alias     = "__uni__510b38e",
     [string]$StorePass = "<REDACTED_KEYSTORE_PW>",
-    [string]$Work      = "C:\im-local\apk-rebuild2"
+    [string]$Work      = "C:\im-local\apk-rebuild2",
+    # 基座里原生 AndroidManifest.xml 写死的 versionName（用于等长替换同步）
+    [string]$NativeVersionOld = "1.3.0"
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,11 +49,11 @@ $mtxt = Read-ZipText $RuntimeManifestSrc ($PREFIX + 'manifest.json')
 if (-not $mtxt) { throw "没找到运行时 manifest 模板" }
 $m = $mtxt | ConvertFrom-Json
 
-$m.version.name = '1.3.0'
-$m.version.code = 130
+$m.version.name = '1.4.0'
+$m.version.code = 140
 
 $tb = $m.'plus'.tabBar
-$tb.color         = '#667781'
+$tb.color         = '#8696A0'
 $tb.selectedColor = '#2F8FE5'
 $tb.borderStyle   = 'rgba(0,0,0,0.06)'
 $tb.height        = '56px'
@@ -123,6 +125,55 @@ Write-Host ("      plus.tabBar 存在: " + [bool]$ck.'plus'.tabBar)
 Write-Host ("      launch_path: " + $ck.launch_path)
 Write-Host ("      tabBar 首个图标: " + $ck.'plus'.tabBar.list[0].iconPath)
 if ($chk -match '09C160') { Write-Host "      ⚠ manifest 里仍有微信绿" } else { Write-Host "      ✔ manifest 无微信绿" }
+
+# ---------- 4.5 原生 versionName 同步 ----------
+# 背景：DCloud 云打包的基座里，AndroidManifest.xml 的原生 versionName/versionCode
+#       是云打包时写死的（本基座为 1.3.0 / 120），改 www/manifest.json 影响不到它，
+#       结果系统「应用信息」显示的版本与 App 内显示的版本不一致。
+# 做法：versionName 在 AXML 字符串池里是等长的 UTF-16LE 字符串，
+#       与给高德 Key 打补丁是同一套技术，等长替换零风险。
+#       versionCode 是二进制 AXML 的整型属性，改动需解析 AXML 结构、风险明显更高，
+#       故**保持不动** —— 同签名覆盖安装不受影响（同版本号允许重装）。
+function Read-ZipBytes($apk, $name) {
+    $z = [System.IO.Compression.ZipFile]::OpenRead($apk)
+    $en = $z.Entries | Where-Object { $_.FullName -eq $name }
+    if (-not $en) { $z.Dispose(); return $null }
+    $msx = New-Object System.IO.MemoryStream
+    $sx = $en.Open(); $sx.CopyTo($msx); $sx.Close(); $z.Dispose()
+    $bx = $msx.ToArray(); $msx.Dispose(); return $bx
+}
+
+Write-Host "[4.5] 同步原生 versionName ..."
+$ambName = 'AndroidManifest.xml'
+$amb = Read-ZipBytes $raw $ambName
+if (-not $amb) { throw "APK 里没有 $ambName" }
+$oldVB = [System.Text.Encoding]::Unicode.GetBytes($NativeVersionOld)
+$newVB = [System.Text.Encoding]::Unicode.GetBytes($m.version.name)
+if ($oldVB.Length -ne $newVB.Length) {
+    Write-Host ("      ! '$NativeVersionOld' 与 '" + $m.version.name + "' 长度不同，跳过")
+} else {
+    $hits = 0
+    for ($i = 0; $i -le $amb.Length - $oldVB.Length; $i++) {
+        $same = $true
+        for ($j = 0; $j -lt $oldVB.Length; $j++) { if ($amb[$i + $j] -ne $oldVB[$j]) { $same = $false; break } }
+        if ($same) {
+            for ($j = 0; $j -lt $newVB.Length; $j++) { $amb[$i + $j] = $newVB[$j] }
+            $hits++
+            $i += $oldVB.Length - 1
+        }
+    }
+    if ($hits -ne 1) {
+        Write-Host ("      ! '$NativeVersionOld' 出现 $hits 次（预期 1 次），为安全起见跳过")
+    } else {
+        $z2 = [System.IO.Compression.ZipFile]::Open($raw, 'Update')
+        $oe = $z2.Entries | Where-Object { $_.FullName -eq $ambName }
+        if ($oe) { $oe.Delete() }
+        $ne = $z2.CreateEntry($ambName, [System.IO.Compression.CompressionLevel]::Optimal)
+        $sw = $ne.Open(); $sw.Write($amb, 0, $amb.Length); $sw.Close()
+        $z2.Dispose()
+        Write-Host ("      原生 versionName: $NativeVersionOld -> " + $m.version.name + "  (已改)")
+    }
+}
 
 # ---------- 5. zipalign + 重签 ----------
 $aligned = Join-Path $Work "aligned.apk"

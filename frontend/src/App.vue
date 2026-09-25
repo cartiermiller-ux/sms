@@ -192,41 +192,62 @@
 	/* #endif */
 
 	/* ============================================================
-	   Msm 品牌全局样式
+	   Msm 全局样式 —— 灰白降噪 + 品牌蓝点缀
 	   Design Token 的运行时部分 + 通用容器类
 	   （数值与 uni.scss 中的 SCSS 变量保持一致）
-	   注意：不使用 flex gap，老安卓 WebView 不支持，统一用 margin。
+	   注意：不使用 flex gap —— 老安卓 WebView 不支持，统一用 margin。
 	   ============================================================ */
 	page,
 	:root {
+		/* 品牌蓝：只做「焦点」—— 选中态 / 链接 / 未读角标 / 聚焦边框 */
 		--msm-primary: #2F8FE5;
-		--msm-primary-dark: #1677C8;
+		--msm-primary-dark: #1F7ACC;
 		--msm-primary-light: #EAF4FD;
-		--msm-cyan: #18B6D9;
-		--msm-gradient: linear-gradient(135deg, #2F8FE5 0%, #18B6D9 100%);
 
+		/* 墨黑：主按钮与标题（与 Logo 的深色呼应） */
+		--msm-ink: #111B21;
+		--msm-ink-dark: #000000;
+
+		/* 文字 */
 		--msm-text: #111B21;
 		--msm-text-secondary: #667781;
 		--msm-text-muted: #8696A0;
+		--msm-text-faint: #B7C2CB;
 		--msm-text-inverse: #FFFFFF;
 
-		--msm-background: #F7F9FA;
+		/* 背景与边框 */
+		--msm-background: #F5F5F5;
 		--msm-surface: #FFFFFF;
-		--msm-surface-sunken: #F0F4F6;
-		--msm-divider: #E9EDEF;
+		--msm-surface-sunken: #F5F5F5;
+		--msm-divider: #E0E0E0;
 
-		--msm-success: #21C063;
-		--msm-danger: #EA4335;
-		--msm-warning: #F5A623;
+		/* 语义色：只用于状态，不作装饰 */
+		--msm-success: #388E3C;
+		--msm-danger: #D32F2F;
+		--msm-warning: #F57C00;
 
-		--msm-radius-sm: 10px;
-		--msm-radius-md: 14px;
-		--msm-radius-lg: 18px;
+		/* 在线状态：绿色已让给「成功」，在线改用中性墨色 */
+		--msm-online: #111B21;
+		--msm-offline: #CCCCCC;
+
+		/* 圆角（克制：卡片与按钮接近直角，头像直角） */
+		--msm-radius-sm: 0px;
+		--msm-radius-md: 2px;
+		--msm-radius-lg: 4px;
 		--msm-radius-pill: 999px;
 
-		--msm-shadow-sm: 0 1px 2px rgba(17, 27, 33, .06);
-		--msm-shadow-md: 0 2px 12px rgba(17, 27, 33, .08);
-		--msm-shadow-lg: 0 8px 28px rgba(47, 143, 229, .18);
+		/* 尺寸 */
+		--msm-page-pad: 20px;
+		--msm-row-pad-y: 16px;
+		--msm-avatar: 40px;
+		--msm-avatar-lg: 60px;
+
+		/* 阴影：本方案不使用阴影。
+		   保留这三个变量名只为兼容旧引用（值统一为 none），
+		   层次一律靠 1px 分割线与灰/白底对比表达。 */
+		--msm-shadow-sm: none;
+		--msm-shadow-md: none;
+		--msm-shadow-lg: none;
 	}
 
 	page {
@@ -236,25 +257,32 @@
 		-webkit-font-smoothing: antialiased;
 	}
 
-	/* ---------- 自定义导航栏（navigationStyle: custom 时使用） ---------- */
+	/* ============================================================
+	   1. 自定义导航栏（navigationStyle: custom 时使用）
+	   ============================================================ */
 	.msm-header {
 		position: sticky;
 		top: 0;
 		z-index: 90;
 		background: var(--msm-surface);
-		padding: calc(var(--status-bar-height, 0px) + 4px) 20px 0;
-		box-shadow: 0 1px 0 var(--msm-divider);
+		padding: calc(var(--status-bar-height, 0px) + 8px) var(--msm-page-pad) 0;
+		border-bottom: 1px solid var(--msm-divider);
+	}
+
+	/* 内部已有自带分割线的元素（如 .msm-tabs）时，去掉头部自己的边框 */
+	.msm-header--flat {
+		border-bottom: 0;
 	}
 
 	.msm-header__bar {
 		display: flex;
 		align-items: flex-end;
 		justify-content: space-between;
-		min-height: 40px;
+		min-height: 42px;
 	}
 
 	.msm-header__left {
-		padding-bottom: 5px;
+		padding-bottom: 8px;
 	}
 
 	.msm-header__brand {
@@ -265,29 +293,39 @@
 		color: var(--msm-text);
 	}
 
+	/* 字标：M 用墨黑，sm 用品牌蓝（与 Logo 一致） */
 	.msm-header__brand em {
 		font-style: normal;
 		color: var(--msm-primary);
 	}
 
+	/* 页面标题（通讯录 / 发现 / 我 这类非品牌页用） */
+	.msm-header__title {
+		font-size: 20px;
+		font-weight: 700;
+		letter-spacing: -.3px;
+		line-height: 1;
+		color: var(--msm-text);
+	}
+
 	.msm-header__sub {
-		margin-top: 3px;
+		margin-top: 5px;
 		font-size: 12px;
-		color: var(--msm-text-secondary);
+		color: var(--msm-text-muted);
 		line-height: 1;
 	}
 
 	.msm-header__actions {
 		display: flex;
 		align-items: center;
-		padding-bottom: 4px;
+		padding-bottom: 6px;
 	}
 
 	.msm-icon-btn {
-		width: 36px;
-		height: 36px;
+		width: 34px;
+		height: 34px;
 		margin-left: 2px;
-		border-radius: var(--msm-radius-pill);
+		border-radius: var(--msm-radius-md);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -298,173 +336,414 @@
 		background: var(--msm-surface-sunken);
 	}
 
-	/* ---------- 搜索框 ---------- */
+	/* 导航栏右上角的用户头像（圆形，参考 V2EX 首页头部） */
+	.msm-avatar-btn {
+		width: 32px;
+		height: 32px;
+		margin-left: 10px;
+		border-radius: 50%;
+		overflow: hidden;
+		flex-shrink: 0;
+		background: var(--msm-background);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.msm-avatar-btn:active {
+		opacity: .65;
+	}
+
+	.msm-avatar-btn__img {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+
+	/* ============================================================
+	   2. 搜索框：纯白 + 1px 细边框（不再是灰色块）
+	   ============================================================ */
 	.msm-search {
 		display: flex;
 		align-items: center;
 		height: 36px;
-		margin: 8px 0 10px;
-		padding: 0 12px;
-		background: var(--msm-surface-sunken);
-		border-radius: var(--msm-radius-pill);
+		margin: 10px 0 12px;
+		padding: 0 10px;
+		background: var(--msm-surface);
+		border: 1px solid var(--msm-divider);
+		border-radius: var(--msm-radius-lg);
 		color: var(--msm-text-muted);
-		font-size: 15px;
+		font-size: 14px;
+	}
+
+	/* 整个搜索框获得焦点时边框变蓝 */
+	.msm-search:focus-within {
+		border-color: var(--msm-primary);
 	}
 
 	.msm-search__icon {
-		margin-right: 8px;
+		margin-right: 6px;
 		flex-shrink: 0;
+		color: var(--msm-text-muted);
 	}
 
-	/* ---------- 分段筛选 ---------- */
-	.msm-segment {
+	/* ============================================================
+	   3. 文字标签页（选中 = 墨黑文字 + 1px 蓝色下划线）
+	   ============================================================ */
+	.msm-tabs {
 		display: flex;
-		padding-bottom: 9px;
+		align-items: flex-end;
+		background: var(--msm-surface);
+		border-bottom: 1px solid var(--msm-divider);
 	}
 
-	.msm-segment__item {
-		padding: 4px 13px;
-		margin-right: 8px;
-		border-radius: var(--msm-radius-pill);
-		font-size: 13px;
+	/* 独立使用时左右留白；嵌在已留白的容器里则用不带 --pad 的版本 */
+	.msm-tabs--pad {
+		padding: 0 var(--msm-page-pad);
+	}
+
+	/* 不需要自带分割线时（外层已有边框） */
+	.msm-tabs--plain {
+		border-bottom: 0;
+	}
+
+	.msm-tabs--inCard {
+		padding: 0 20px;
+	}
+
+	.msm-tabs__item {
+		position: relative;
+		padding: 12px 0 11px;
+		margin-right: 24px;
+		font-size: 15px;
+		line-height: 1;
 		color: var(--msm-text-secondary);
-		background: var(--msm-surface-sunken);
 	}
 
-	.msm-segment__item--active {
-		background: var(--msm-primary);
-		color: #fff;
+	.msm-tabs__item--active {
+		color: var(--msm-text);
 		font-weight: 600;
 	}
 
-	/* ---------- 卡片 / 分组 ---------- */
-	.msm-card {
-		background: var(--msm-surface);
-		border-radius: var(--msm-radius-md);
-		margin: 0 12px 10px;
-		overflow: hidden;
+	.msm-tabs__item--active::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: -1px;
+		height: 1px;
+		background: var(--msm-primary);
 	}
 
-	.msm-gap {
-		height: 10px;
-	}
-
-	.msm-group-title {
-		padding: 6px 16px 8px;
+	/* ============================================================
+	   4. 分组标题（直接贴在灰底上，不放进卡片里）
+	   ============================================================ */
+	.msm-section {
+		padding: 16px var(--msm-page-pad) 8px;
 		font-size: 13px;
 		color: var(--msm-text-muted);
 		letter-spacing: .3px;
 	}
 
-	/* ---------- 列表行 ---------- */
-	.msm-cell {
-		display: flex;
-		align-items: center;
-		min-height: 56px;
-		padding: 8px 16px;
+	/* ============================================================
+	   5. 卡片 / 分组容器（无圆角、无阴影、1px 细线）
+	   ============================================================ */
+	.msm-card {
 		background: var(--msm-surface);
+		border-radius: var(--msm-radius-md);
+		margin: 0 var(--msm-page-pad) 8px;
+		overflow: hidden;
 	}
 
-	.msm-cell--tappable:active {
+	/* 通栏卡片：左右不留白，仅靠 1px 线分隔 */
+	.msm-card--flush {
+		margin-left: 0;
+		margin-right: 0;
+		border-radius: 0;
+	}
+
+	.msm-card--plain {
+		background: transparent;
+		border-radius: 0;
+	}
+
+	/* 卡片头部：深灰小标题 + 右侧次要文案 */
+	.msm-card__head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 14px var(--msm-page-pad) 10px;
+		border-bottom: 1px solid var(--msm-divider);
+	}
+
+	.msm-card__head-title {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--msm-text-secondary);
+	}
+
+	.msm-card__head-more {
+		font-size: 13px;
+		color: var(--msm-text-muted);
+	}
+
+	/* 卡片脚部 */
+	.msm-card__foot {
+		padding: 10px var(--msm-page-pad);
+		border-top: 1px solid var(--msm-divider);
+		font-size: 13px;
+		color: var(--msm-text-muted);
+	}
+
+	.msm-gap {
+		height: 8px;
+	}
+
+	/* ============================================================
+	   6. 列表行（白底、内容自适应高度、1px 底部分割线）
+	   ============================================================ */
+	.msm-row {
+		display: flex;
+		align-items: center;
+		padding: var(--msm-row-pad-y) var(--msm-page-pad);
+		background: var(--msm-surface);
+		border-bottom: 1px solid var(--msm-divider);
+	}
+
+	.msm-row:last-child {
+		border-bottom: 0;
+	}
+
+	.msm-row--tappable:active {
 		background: var(--msm-surface-sunken);
 	}
 
-	.msm-cell__icon {
-		width: 38px;
-		height: 38px;
-		margin-right: 14px;
+	/* 多行内容时顶部对齐 */
+	.msm-row--top {
+		align-items: flex-start;
+	}
+
+	/* 左头像：正方形（直角），与「降噪」基调一致 */
+	.msm-row__avatar {
+		width: var(--msm-avatar);
+		height: var(--msm-avatar);
+		margin-right: 12px;
 		border-radius: var(--msm-radius-sm);
+		flex-shrink: 0;
+		background: var(--msm-background);
+		overflow: hidden;
+	}
+
+	/* 个人资料用大头像 */
+	.msm-row__avatar--lg {
+		width: var(--msm-avatar-lg);
+		height: var(--msm-avatar-lg);
+		margin-right: 14px;
+	}
+
+	/* 群聊九宫格头像：外层仍是方框，内部 2×2 铺满 */
+	.msm-row__avatar--group {
+		display: flex;
+		flex-wrap: wrap;
+	}
+
+	.msm-row__avatar-mini {
+		width: 50%;
+		height: 50%;
+		display: block;
+	}
+
+	/* 左侧纯线条图标（无彩色底块），统一 #667781 */
+	.msm-row__icon {
+		width: 24px;
+		height: 24px;
+		margin-right: 14px;
+		flex-shrink: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		flex-shrink: 0;
-		background: var(--msm-primary-light);
-		color: var(--msm-primary);
+		color: var(--msm-text-secondary);
 	}
 
-	.msm-cell__icon--plain {
-		background: transparent;
-	}
-
-	.msm-cell__body {
+	.msm-row__body {
 		flex: 1;
 		min-width: 0;
 	}
 
-	.msm-cell__title {
+	.msm-row__title {
 		font-size: 16px;
+		font-weight: 600;
 		color: var(--msm-text);
 		line-height: 1.35;
-	}
-
-	.msm-cell__desc {
-		margin-top: 3px;
-		font-size: 13px;
-		color: var(--msm-text-secondary);
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
-	.msm-cell__extra {
-		margin-left: 10px;
-		font-size: 13px;
+	/* 菜单行标题：常规字重 */
+	.msm-row__title--plain {
+		font-weight: 400;
+		font-size: 15px;
+	}
+
+	.msm-row__desc {
+		margin-top: 5px;
+		font-size: 14px;
+		color: var(--msm-text-secondary);
+		line-height: 1.45;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	/* 摘要显示两行 */
+	.msm-row__desc--clamp2 {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		white-space: normal;
+	}
+
+	.msm-row__meta {
+		margin-top: 6px;
+		font-size: 12px;
 		color: var(--msm-text-muted);
+		line-height: 1.3;
+		display: flex;
+		align-items: center;
+	}
+
+	.msm-row__meta-sep {
+		margin: 0 6px;
+		color: var(--msm-divider);
+	}
+
+	/* 右侧区（角标），纵向排列靠右 */
+	.msm-row__right {
+		margin-left: 12px;
+		flex-shrink: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		justify-content: center;
+	}
+
+	.msm-row__time {
+		font-size: 12px;
+		color: var(--msm-text-muted);
+		line-height: 1.2;
+	}
+
+	.msm-row__extra {
+		font-size: 14px;
+		color: var(--msm-text-muted);
+		flex-shrink: 0;
+		margin-left: 8px;
+	}
+
+	/* ============================================================
+	   7. 角标 / 状态点 / 标签
+	   ============================================================ */
+	/* 未读角标：品牌蓝（蓝是「焦点色」，用在这里正合适） */
+	.msm-badge {
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border-radius: var(--msm-radius-pill);
+		background: var(--msm-primary);
+		color: #FFFFFF;
+		font-size: 11px;
+		font-weight: 600;
+		line-height: 18px;
+		text-align: center;
+	}
+
+	/* 需要强调（真正出错）时才用红色 */
+	.msm-badge--danger {
+		background: var(--msm-danger);
+		color: #FFFFFF;
+	}
+
+	/* 角标直接排在列表行里（不放进右侧竖列）时的间距 */
+	.msm-badge--row {
+		margin-left: 8px;
+		margin-right: 2px;
+	}
+
+	/* 在线状态点：在线 = 墨色，离线 = 浅灰 */
+	.msm-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: var(--msm-radius-pill);
+		background: var(--msm-online);
 		flex-shrink: 0;
 	}
 
+	.msm-dot--off {
+		background: var(--msm-offline);
+	}
+
+	.msm-dot--inline {
+		display: inline-block;
+		margin-right: 5px;
+		vertical-align: middle;
+	}
+
+	.msm-tag {
+		display: inline-block;
+		height: 20px;
+		line-height: 20px;
+		padding: 0 6px;
+		margin-right: 6px;
+		border-radius: var(--msm-radius-sm);
+		background: var(--msm-background);
+		color: var(--msm-text-secondary);
+		font-size: 12px;
+	}
+
+	/* ============================================================
+	   8. 箭头 / 分割线
+	   ============================================================ */
 	.msm-arrow {
 		margin-left: 8px;
-		color: #C4CDD3;
+		color: var(--msm-text-muted);
 		font-size: 15px;
 		flex-shrink: 0;
 	}
 
 	.msm-divider {
 		height: 1px;
-		margin-left: 16px;
+		margin-left: var(--msm-page-pad);
 		background: var(--msm-divider);
 	}
 
-	/* ---------- 未读角标 ---------- */
-	.msm-badge {
-		min-width: 20px;
-		height: 20px;
-		padding: 0 6px;
-		margin-left: 10px;
-		border-radius: var(--msm-radius-pill);
-		background: var(--msm-danger);
-		color: #fff;
-		font-size: 11px;
-		font-weight: 600;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		flex-shrink: 0;
+	.msm-divider--full {
+		margin-left: 0;
 	}
 
-	/* ---------- 空状态 ---------- */
+	/* ============================================================
+	   9. 空状态（极简：只放一个灰色线条图标 + 灰字，无底块）
+	   ============================================================ */
 	.msm-empty {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		padding: 46px 32px 32px;
+		padding: 64px 32px 32px;
 		text-align: center;
 	}
 
 	.msm-empty__art {
-		width: 84px;
-		height: 84px;
-		border-radius: 50%;
-		background: var(--msm-primary-light);
+		width: 40px;
+		height: 40px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		color: var(--msm-text-muted);
 	}
 
 	.msm-empty__title {
-		margin-top: 18px;
-		font-size: 17px;
+		margin-top: 16px;
+		font-size: 16px;
 		font-weight: 600;
 		color: var(--msm-text);
 	}
@@ -473,26 +752,88 @@
 		margin-top: 8px;
 		font-size: 14px;
 		line-height: 1.6;
-		color: var(--msm-text-secondary);
+		color: var(--msm-text-muted);
 	}
 
+	/* 列表底部提示（加载中 / 没有更多了） */
+	.msm-list__foot {
+		padding: 18px 0 22px;
+		text-align: center;
+		font-size: 13px;
+		color: var(--msm-text-muted);
+	}
+
+	/* ============================================================
+	   10. 按钮
+	   ------------------------------------------------------------
+	   主按钮 = 墨黑 #111B21（不是品牌蓝！蓝色只做焦点，不做大面积色块）
+	   ============================================================ */
 	.msm-btn {
-		margin-top: 26px;
-		height: 46px;
-		padding: 0 34px;
-		border-radius: var(--msm-radius-pill);
-		background: var(--msm-primary);
-		color: #fff;
+		height: 48px;
+		padding: 0 24px;
+		border-radius: var(--msm-radius-md);
+		background: var(--msm-ink);
+		color: #FFFFFF;
 		font-size: 16px;
 		font-weight: 600;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: var(--msm-shadow-lg);
 	}
 
 	.msm-btn:active {
-		background: var(--msm-primary-dark);
+		background: var(--msm-ink-dark);
+	}
+
+	.msm-btn--block {
+		width: 100%;
+	}
+
+	/* 幽灵按钮：白底 + 1px 边框 + 墨黑文字 */
+	.msm-btn--ghost {
+		background: var(--msm-surface);
+		color: var(--msm-ink);
+		border: 1px solid var(--msm-divider);
+	}
+
+	.msm-btn--ghost:active {
+		background: var(--msm-surface-sunken);
+	}
+
+	/* 文字按钮：蓝色（链接语义） */
+	.msm-btn--text {
+		background: transparent;
+		color: var(--msm-primary);
+		padding: 0 8px;
+	}
+
+	.msm-btn--danger {
+		background: var(--msm-danger);
+	}
+
+	.msm-btn--sm {
+		height: 36px;
+		padding: 0 18px;
+		font-size: 14px;
+	}
+
+	.msm-btn__hint {
+		margin-top: 14px;
+		font-size: 13px;
+		color: var(--msm-text-muted);
+		text-align: center;
+	}
+
+	/* ============================================================
+	   11. 链接（统一品牌蓝）
+	   ============================================================ */
+	.msm-link {
+		color: var(--msm-primary);
+		font-size: 14px;
+	}
+
+	.msm-link:active {
+		color: var(--msm-primary-dark);
 	}
 
 </style>

@@ -1,12 +1,18 @@
 /* ============================================================
-   Msm 认证页共用样式（Compact Density）
-   —— 对齐 Telegram 的紧凑节奏：
-      内容顶对齐、不被拉伸；控件 52px；字段间距 14px；左右边距 20px
+   Msm 认证页共用样式 —— 灰白降噪 + 品牌蓝点缀
+   ------------------------------------------------------------
+   要点：
+     · 输入框：纯白底 + 1px 浅灰边框（不再是灰色大圆角块）
+     · 聚焦时边框变品牌蓝 #2F8FE5
+     · 主按钮：墨黑 #111B21（蓝色不做大面积色块）
+     · 链接类文字（忘记密码 / 使用验证码登录 / 获取验证码 / 协议）：品牌蓝
+     · 复选框必须显式指定 color，否则 uni-app 默认渲染成微信绿
+   数值与 uni.scss / App.vue 中的 token 保持一致。
    ============================================================ */
 
 .auth {
 	min-height: 100vh;
-	background: #ffffff;
+	background: #FFFFFF;
 	display: flex;
 	flex-direction: column;
 	padding: calc(var(--status-bar-height, 0px) + 4px) 20px 20px;
@@ -15,99 +21,96 @@
 
 /* ---------- 返回 ---------- */
 .auth__nav {
-	height: 42px;
+	height: 44px;
 	display: flex;
 	align-items: center;
 }
 
 .auth__back {
-	width: 36px;
-	height: 36px;
+	width: 34px;
+	height: 34px;
 	margin-left: -6px;
-	border-radius: 999px;
+	border-radius: var(--msm-radius-md);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
 .auth__back--active {
-	background: #F0F4F6;
+	background: var(--msm-surface-sunken);
 }
 
-/* ---------- 品牌头（压缩到 ~100px）---------- */
+/* ---------- 品牌头 ---------- */
 .auth__head {
-	padding: 6px 0 18px;
+	padding: 6px 0 20px;
 }
 
+/* Logo 字标（透明底 PNG，原图 767×274） */
 .auth__logo {
-	font-size: 22px;
-	font-weight: 700;
-	letter-spacing: -.4px;
-	line-height: 1;
-}
-
-.auth__logo-m {
-	color: #111B21;
-}
-
-.auth__logo-sm {
-	color: #2F8FE5;
+	width: 104px;
+	height: 37px;
 }
 
 .auth__title {
-	margin-top: 14px;
-	font-size: 24px;
+	margin-top: 18px;
+	font-size: 22px;
 	font-weight: 700;
-	color: #111B21;
+	color: var(--msm-text);
 	letter-spacing: -.2px;
-	line-height: 1.15;
+	line-height: 1.2;
 }
 
 .auth__sub {
-	margin-top: 4px;
-	font-size: 13px;
-	color: #8696A0;
+	margin-top: 6px;
+	font-size: 14px;
+	color: var(--msm-text-muted);
 	line-height: 1.3;
 }
 
-/* ---------- 表单（关键：不要 flex:1，否则内容会被拉伸铺满整屏）---------- */
+/* ---------- 表单（不要 flex:1，否则内容被拉伸铺满整屏）---------- */
 .auth__form {
 	flex: none;
 }
 
 .field {
-	margin-bottom: 14px;
+	margin-bottom: 16px;
 }
 
 .field__label {
-	font-size: 12.5px;
-	color: #667781;
-	margin-bottom: 6px;
-	padding-left: 2px;
+	font-size: 13px;
+	color: var(--msm-text-secondary);
+	margin-bottom: 8px;
+	padding-left: 1px;
 }
 
+/* 输入框：纯白底 + 1px 细边框 + 小圆角 */
 .field__box {
 	display: flex;
 	align-items: center;
-	height: 52px;
-	padding: 0 12px;
-	background: #F7F9FA;
-	border: 1px solid #E9EDEF;
-	border-radius: 12px;
+	height: 48px;
+	padding: 0 14px;
+	background: var(--msm-surface);
+	border: 1px solid var(--msm-divider);
+	border-radius: var(--msm-radius-md);
 	box-sizing: border-box;
+}
+
+/* 聚焦时边框变品牌蓝 —— 蓝色作为「焦点」的典型用法 */
+.field__box:focus-within {
+	border-color: var(--msm-primary);
 }
 
 .field__cc {
 	font-size: 15px;
 	font-weight: 600;
-	color: #111B21;
+	color: var(--msm-text);
 }
 
 .field__sep {
 	width: 1px;
 	height: 18px;
-	margin: 0 10px;
-	background: #DDE3E7;
+	margin: 0 12px;
+	background: var(--msm-divider);
 }
 
 .field__input {
@@ -115,13 +118,13 @@
 	min-width: 0;
 	height: 100%;
 	font-size: 15px;
-	color: #111B21;
+	color: var(--msm-text);
 	background: transparent;
 }
 
 .field__ph {
-	color: #A9B4BC;
-	font-size: 14.5px;
+	color: var(--msm-text-muted);
+	font-size: 15px;
 }
 
 .field__suffix {
@@ -130,24 +133,25 @@
 	align-items: center;
 }
 
+/* “获取验证码”：链接语义 → 品牌蓝 */
 .field__code {
-	padding-left: 10px;
-	font-size: 13.5px;
+	padding-left: 12px;
+	font-size: 14px;
 	font-weight: 600;
-	color: #2F8FE5;
+	color: var(--msm-primary);
 }
 
 .field__code--dim {
-	color: #A9B4BC;
+	color: var(--msm-text-faint);
 	font-weight: 400;
 }
 
 .auth__forgot {
 	text-align: right;
-	font-size: 12.5px;
-	color: #2F8FE5;
-	padding: 0 2px 2px;
-	margin-top: -6px;
+	font-size: 13px;
+	color: var(--msm-primary);
+	padding: 0 1px 2px;
+	margin-top: -8px;
 }
 
 /* ---------- 协议 ---------- */
@@ -155,76 +159,81 @@
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	margin: 10px 0 0;
+	margin: 12px 0 0;
 }
 
 .auth__agree-tap {
 	display: flex;
 	align-items: center;
-	min-height: 38px;
+	min-height: 40px;
 	padding-right: 2px;
 }
 
 .auth__agree-text {
-	font-size: 12px;
-	color: #667781;
+	font-size: 13px;
+	color: var(--msm-text-secondary);
 }
 
 .auth__agree-link {
-	font-size: 12px;
-	color: #2F8FE5;
+	font-size: 13px;
+	color: var(--msm-primary);
 	padding: 8px 0;
 }
 
-/* ---------- 主按钮 ---------- */
+/* ---------- 主按钮：墨黑（不是品牌蓝）---------- */
 .auth__submit {
-	margin-top: 8px;
-	height: 52px;
-	line-height: 52px;
+	margin-top: 10px;
+	height: 48px;
+	line-height: 48px;
 	border: none;
-	border-radius: 999px;
-	background: #2F8FE5;
-	color: #ffffff;
+	border-radius: var(--msm-radius-md);
+	background: var(--msm-ink);
+	color: #FFFFFF;
 	font-size: 16px;
 	font-weight: 600;
 	letter-spacing: .5px;
-	box-shadow: 0 6px 16px rgba(47, 143, 229, .26);
 }
 
 .auth__submit::after {
 	border: none;
 }
 
+.auth__submit[disabled] {
+	background: #CCCCCC;
+	color: #FFFFFF;
+}
+
 /* ---------- 分隔 / 切换 ---------- */
 .auth__or {
 	display: flex;
 	align-items: center;
-	margin: 16px 0 10px;
+	margin: 18px 0 12px;
 }
 
 .auth__or-line {
 	flex: 1;
 	height: 1px;
-	background: #E9EDEF;
+	background: var(--msm-divider);
 }
 
 .auth__or-text {
-	margin: 0 10px;
-	font-size: 11.5px;
-	color: #A9B4BC;
+	margin: 0 12px;
+	font-size: 12px;
+	color: var(--msm-text-muted);
 }
 
+/* 切换登录方式：链接语义 → 品牌蓝 */
 .auth__alt {
 	text-align: center;
-	font-size: 13.5px;
-	font-weight: 500;
-	color: #2F8FE5;
-	padding: 4px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--msm-primary);
+	padding: 6px;
 }
 
-/* ---------- 底部（紧接内容，不做拉伸）---------- */
+/* ---------- 底部 ---------- */
 .auth__foot {
-	margin-top: 22px;
+	margin-top: 24px;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -232,13 +241,21 @@
 }
 
 .auth__foot-dim {
-	font-size: 13.5px;
-	color: #8696A0;
+	font-size: 14px;
+	color: var(--msm-text-muted);
 }
 
 .auth__foot-strong {
-	font-size: 13.5px;
+	font-size: 14px;
 	font-weight: 600;
-	color: #2F8FE5;
+	color: var(--msm-primary);
 	padding: 10px 6px;
+}
+
+/* ---------- 错误提示（红色只用于错误）---------- */
+.auth__error {
+	margin-top: 10px;
+	font-size: 13px;
+	color: var(--msm-danger);
+	line-height: 1.5;
 }

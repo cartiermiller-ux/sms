@@ -1,25 +1,31 @@
 <template>
 	<view class="msm-page">
-		<!-- ============ 品牌导航栏 ============ -->
-		<view class="msm-header">
+		<!-- ============ 导航栏 ============ -->
+		<view class="msm-header msm-header--flat">
 			<view class="msm-header__bar">
 				<view class="msm-header__left">
 					<view class="msm-header__brand">M<em>sm</em></view>
-					<view class="msm-header__sub">与你保持联系</view>
 				</view>
 				<view class="msm-header__actions">
-					<view class="msm-icon-btn" @click="focusSearch">
-						<uni-icons type="search" size="22" color="#667781"></uni-icons>
-					</view>
 					<view class="msm-icon-btn" @click="openMore">
-						<uni-icons type="plusempty" size="22" color="#2F8FE5"></uni-icons>
+						<uni-icons type="plusempty" size="20" color="#111B21"></uni-icons>
+					</view>
+					<!-- 右上角用户头像（圆形）—— 参考 V2EX 首页头部 -->
+					<view class="msm-avatar-btn" @click="goMe">
+						<image
+							v-if="userInfo && userInfo.portrait"
+							class="msm-avatar-btn__img"
+							:src="userInfo.portrait"
+							mode="aspectFill"
+						></image>
+						<uni-icons v-else type="staff" size="19" color="#8696A0"></uni-icons>
 					</view>
 				</view>
 			</view>
 
 			<!-- 搜索 -->
 			<view class="msm-search">
-				<uni-icons class="msm-search__icon" type="search" size="17" color="#8696A0"></uni-icons>
+				<uni-icons class="msm-search__icon" type="search" size="15" color="#8696A0"></uni-icons>
 				<input
 					class="msm-search__input"
 					v-model="keyword"
@@ -29,82 +35,77 @@
 					confirm-type="search"
 				/>
 				<view v-if="keyword" class="msm-search__clear" @click="keyword = ''">
-					<uni-icons type="clear" size="17" color="#8696A0"></uni-icons>
+					<uni-icons type="clear" size="15" color="#8696A0"></uni-icons>
 				</view>
 			</view>
 
-			<!-- 分段筛选 -->
-			<view class="msm-segment">
+			<!-- 标签页（自带下划线指示，同时充当导航栏底部分割线） -->
+			<view class="msm-tabs">
 				<view
 					v-for="(t, i) in tabs"
 					:key="i"
-					class="msm-segment__item"
-					:class="{ 'msm-segment__item--active': tabIndex === i }"
+					class="msm-tabs__item"
+					:class="{ 'msm-tabs__item--active': tabIndex === i }"
 					@click="tabIndex = i"
 				>{{ t }}</view>
 			</view>
 		</view>
 
 		<!-- ============ 会话列表 ============ -->
-		<view v-if="filteredList.length" class="chat-list">
+		<msm-list
+			:items="filteredList"
+			:empty-title="emptyTitle"
+			:empty-desc="emptyDesc"
+			:empty-icon="keyword ? 'search' : 'info'"
+		>
 			<view
 				v-for="(v, i) in filteredList"
 				:key="v.userId"
-				class="chat"
+				class="msm-row msm-row--top msm-row--tappable"
 				@click="clickChat(v)"
 				@longpress="onLongPress(v, i)"
 			>
-				<!-- 头像 -->
-				<view class="chat__avatar-wrap">
+				<!-- 头像（近方形小圆角） -->
+				<view v-if="v.windowType !== 'GROUP'" class="msm-row__avatar">
+					<image class="msm-chat__avatar-img" :src="v.portrait" mode="aspectFill"></image>
+				</view>
+				<view v-else class="msm-row__avatar msm-row__avatar--group">
 					<image
-						v-if="v.windowType !== 'GROUP'"
-						class="chat__avatar"
-						:src="v.portrait"
+						v-for="(u, ui) in groupAvatars(v.portrait)"
+						:key="ui"
+						class="msm-row__avatar-mini"
+						:src="u"
 						mode="aspectFill"
 					></image>
-					<view v-else class="chat__avatar chat__avatar--group">
-						<image
-							v-for="(u, ui) in groupAvatars(v.portrait)"
-							:key="ui"
-							class="chat__avatar-mini"
-							:src="u"
-							mode="aspectFill"
-						></image>
-					</view>
-					<view v-if="Number(v.num) > 0" class="chat__badge">
-						{{ Number(v.num) > 99 ? '99+' : v.num }}
+				</view>
+
+				<!-- 内容：标题 / 摘要 / 底部元信息 -->
+				<view class="msm-row__body">
+					<view class="msm-row__title">{{ v.nickName }}</view>
+					<view class="msm-row__desc">{{ v.content }}</view>
+					<view class="msm-row__meta">
+						<text>{{ formatTime(v.time) }}</text>
+						<text v-if="v.top === 'Y'" class="msm-row__meta-sep">·</text>
+						<text v-if="v.top === 'Y'">置顶</text>
 					</view>
 				</view>
 
-				<!-- 内容 -->
-				<view class="chat__body">
-					<view class="chat__row">
-						<text class="chat__name">{{ v.nickName }}</text>
-						<text class="chat__time">{{ formatTime(v.time) }}</text>
-					</view>
-					<view class="chat__row chat__row--bottom">
-						<text class="chat__note">{{ v.content }}</text>
-						<view v-if="v.top === 'Y'" class="chat__pin">
-							<uni-icons type="arrowup" size="11" color="#2F8FE5"></uni-icons>
-							<text class="chat__pin-text">置顶</text>
-						</view>
-					</view>
+				<!-- 右侧：未读角标（灰色数字） -->
+				<view class="msm-row__right">
+					<view v-if="Number(v.num) > 0" class="msm-badge">{{ badgeText(v.num) }}</view>
 				</view>
 
 				<!-- 长按菜单（置顶 / 删除） -->
 				<open-tool :ref="'tool' + i" :data="v" :itemKey="i"></open-tool>
 			</view>
-		</view>
 
-		<!-- ============ 空状态 ============ -->
-		<view v-else class="msm-empty">
-			<view class="empty-logo">
-				<image class="empty-logo__img" src="/static/msm-icon.png" mode="aspectFit"></image>
-			</view>
-			<view class="msm-empty__title">{{ emptyTitle }}</view>
-			<view class="msm-empty__desc">{{ emptyDesc }}</view>
-			<view v-if="!keyword && tabIndex === 0" class="msm-btn" @click="openMore">发起聊天</view>
-		</view>
+			<!-- 空状态下的行动按钮 -->
+			<template #empty>
+				<view v-if="!keyword && tabIndex === 0" class="msm-empty__action" @click="openMore">
+					<view class="msm-btn msm-btn--sm">发起聊天</view>
+				</view>
+			</template>
+		</msm-list>
 
 		<!-- 右上角 + 菜单 -->
 		<top-right-tool-wx ref="trtw"></top-right-tool-wx>
@@ -113,6 +114,7 @@
 
 <script>
 import openTool from '@/components/uni-list-chat-wx/openTool.vue';
+import { formatListTime, formatCount } from '@/common/msm-format.js';
 
 export default {
 	components: { openTool },
@@ -193,6 +195,9 @@ export default {
 			deep: true,
 			immediate: false,
 			handler(val) {
+				// 注意：uni-app 的 setTabBarBadge 协议里只有 text，
+				// 不支持 backgroundColor/color（传了也被忽略），角标固定为框架的红色。
+				// 详见 Msm-V2EX视觉规范.md「底部 Tab」一节的说明。
 				if (val > 0) {
 					uni.setTabBarBadge({ index: 0, text: val.toString() });
 				} else {
@@ -276,7 +281,7 @@ export default {
 	},
 	methods: {
 		/**
-		 * 会话时间显示：
+		 * 会话时间显示（V2EX 紧凑格式，放在 meta 行里）：
 		 *   今天    -> 09:41
 		 *   昨天    -> 昨天
 		 *   今年    -> 9月25日
@@ -287,16 +292,11 @@ export default {
 			if (!t) return '';
 			const s = String(t).trim();
 			if (!/^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(s)) return s;
-			const d = new Date(s.replace(/-/g, '/'));
-			if (isNaN(d.getTime())) return s;
-			const p = n => (n < 10 ? '0' + n : '' + n);
-			const now = new Date();
-			const sameDay = (a, b) =>
-				a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-			if (sameDay(d, now)) return p(d.getHours()) + ':' + p(d.getMinutes());
-			if (sameDay(d, new Date(now.getTime() - 86400000))) return '昨天';
-			if (d.getFullYear() === now.getFullYear()) return d.getMonth() + 1 + '月' + d.getDate() + '日';
-			return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+			return formatListTime(s) || s;
+		},
+		/** 未读数量：>99 显示 99+ */
+		badgeText(n) {
+			return formatCount(n) || String(n);
 		},
 		/** 群头像：portrait 是 JSON 数组字符串 */
 		groupAvatars(portrait) {
@@ -311,6 +311,10 @@ export default {
 		focusSearch() {
 			// 点放大镜/搜索框时把关键词清空，方便重新输入
 			this.keyword = '';
+		},
+		goMe() {
+			// 右上角头像 -> 切到「我」（账号中心）
+			uni.switchTab({ url: '../tabbar4/index' });
 		},
 		openMore() {
 			if (this.$refs['trtw']) this.$refs['trtw'].showTab();
@@ -329,181 +333,44 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.msm-page {
-	min-height: 100vh;
-	background: var(--msm-background);
-	padding-bottom: 20px;
-}
+	/* ============================================================
+	   消息页 —— V2EX 风格
+	   列表行、头像、角标等基础件在 App.vue 的全局样式里，
+	   这里只放本页独有的部分。
+	   ============================================================ */
+	.msm-page {
+		min-height: 100vh;
+		background: var(--msm-background);
+		padding-bottom: 20px;
+	}
 
-/* ---------- 搜索框内的输入 ---------- */
-.msm-search__input {
-	flex: 1;
-	min-width: 0;
-	font-size: 15px;
-	color: var(--msm-text);
-	background: transparent;
-}
+	/* ---------- 搜索框内的输入 ---------- */
+	.msm-search__input {
+		flex: 1;
+		min-width: 0;
+		font-size: 13px;
+		color: var(--msm-text);
+		background: transparent;
+	}
 
-.msm-search__ph {
-	color: var(--msm-text-muted);
-	font-size: 15px;
-}
+	.msm-search__ph {
+		color: var(--msm-text-faint);
+		font-size: 13px;
+	}
 
-.msm-search__clear {
-	padding-left: 6px;
-}
+	.msm-search__clear {
+		padding-left: 6px;
+	}
 
-/* ---------- 会话列表 ---------- */
-.chat-list {
-	background: var(--msm-surface);
-}
+	/* ---------- 会话行内头像的图片本体 ---------- */
+	.msm-chat__avatar-img {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
 
-.chat {
-	position: relative;
-	display: flex;
-	align-items: center;
-	padding: 10px 16px;
-	background: var(--msm-surface);
-}
-
-.chat:active {
-	background: var(--msm-surface-sunken);
-}
-
-.chat::after {
-	content: '';
-	position: absolute;
-	left: 76px;
-	right: 0;
-	bottom: 0;
-	height: 1px;
-	background: var(--msm-divider);
-	transform: scaleY(0.5);
-}
-
-.chat:last-child::after {
-	display: none;
-}
-
-/* 头像 54px */
-.chat__avatar-wrap {
-	position: relative;
-	flex-shrink: 0;
-}
-
-.chat__avatar {
-	width: 48px;
-	height: 48px;
-	border-radius: 24px;
-	background: var(--msm-surface-sunken);
-	display: block;
-}
-
-.chat__avatar--group {
-	display: flex;
-	flex-wrap: wrap;
-	overflow: hidden;
-	border-radius: 14px;
-	background: var(--msm-surface-sunken);
-}
-
-.chat__avatar-mini {
-	width: 50%;
-	height: 50%;
-	display: block;
-}
-
-.chat__badge {
-	position: absolute;
-	top: -2px;
-	right: -4px;
-	min-width: 20px;
-	height: 20px;
-	padding: 0 6px;
-	box-sizing: border-box;
-	border-radius: 999px;
-	background: var(--msm-danger);
-	border: 2px solid var(--msm-surface);
-	color: #fff;
-	font-size: 11px;
-	font-weight: 600;
-	line-height: 16px;
-	text-align: center;
-}
-
-/* 内容区 */
-.chat__body {
-	flex: 1;
-	min-width: 0;
-	margin-left: 12px;
-}
-
-.chat__row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-}
-
-.chat__row--bottom {
-	margin-top: 5px;
-}
-
-.chat__name {
-	flex: 1;
-	min-width: 0;
-	font-size: 15px;
-	font-weight: 600;
-	color: var(--msm-text);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.chat__time {
-	margin-left: 8px;
-	flex-shrink: 0;
-	font-size: 11.5px;
-	color: var(--msm-text-muted);
-}
-
-.chat__note {
-	flex: 1;
-	min-width: 0;
-	font-size: 13.5px;
-	color: var(--msm-text-secondary);
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.chat__pin {
-	margin-left: 8px;
-	flex-shrink: 0;
-	display: flex;
-	align-items: center;
-}
-
-.chat__pin-text {
-	margin-left: 2px;
-	font-size: 11px;
-	color: var(--msm-primary);
-}
-
-/* ---------- 空状态 ---------- */
-.empty-logo {
-	width: 78px;
-	height: 78px;
-	border-radius: 22px;
-	overflow: hidden;
-	background: var(--msm-surface);
-	box-shadow: var(--msm-shadow-md);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.empty-logo__img {
-	width: 78px;
-	height: 78px;
-}
+	/* ---------- 空状态里的行动按钮 ---------- */
+	.msm-empty__action {
+		margin-top: 18px;
+	}
 </style>

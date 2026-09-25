@@ -313,6 +313,7 @@ $hx = "C:\Program Files (x86)\HBuilder X"
 > node C:\im-local\ssh-tool\ssh-run.mjs 120.24.175.80 22 root '<REDACTED_SSH_PASSWORD>' --put `
 >   "_deploy\privacy\index.html" "/www/wwwroot/msm/h5/privacy/index.html"
 > ```
+> （root 密码已于 2026-09-25 轮换，最新口令见 `_deploy\凭据.md`）
 
 ### 高德 Key 已换入 APK
 

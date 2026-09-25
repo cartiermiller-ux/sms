@@ -1,43 +1,57 @@
 @import '@/uni_modules/uni-scss/variables.scss';
 
 /* ============================================================
-   Msm Design Tokens
-   Simple. Social. Messaging.
+   Msm Design Tokens —— 灰白降噪 + 品牌蓝点缀
    ------------------------------------------------------------
-   这里是 SCSS 变量（编译期），可在任意组件的 <style lang="scss"> 里直接用。
-   运行期的 CSS 自定义属性（--msm-*）定义在 App.vue 的全局样式里，
-   两者数值必须保持一致。
+   设计原则（2026-09-25 二次定稿）：
+     1. 大面积交给「浅灰底 + 纯白卡片 + 1px 细线 + 黑主字 + 灰辅字」
+     2. 品牌蓝 #2F8FE5 只作「焦点」出现：
+        选中态 / 链接 / 未读角标 / 输入框聚焦边框
+        —— 绝不做大面积背景，也**不用作主按钮**
+     3. 主按钮用墨黑 #111B21（与 Logo 的深色呼应，体现克制）
+     4. 不使用阴影；层次靠 1px 分割线与灰/白底对比
+     5. 圆角克制：卡片与按钮 0–2px，头像直角
+   这里是编译期 SCSS 变量；运行期 CSS 自定义属性（--msm-*）在 App.vue，
+   两边数值必须保持一致。
    ============================================================ */
 
-/* ---------- 品牌主色 ---------- */
-$msm-primary:        #2F8FE5;   // Msm Blue
-$msm-primary-dark:   #1677C8;
-$msm-primary-light:  #EAF4FD;   // 浅色底（选中态背景、标签底色）
-$msm-cyan:           #18B6D9;   // 渐变辅助色
-$msm-gradient:       linear-gradient(135deg, #2F8FE5 0%, #18B6D9 100%);
+/* ---------- 品牌蓝：只做焦点 ---------- */
+$msm-primary:        #2F8FE5;   // 选中态 / 链接 / 未读角标 / 聚焦边框
+$msm-primary-dark:   #1F7ACC;   // 蓝色按下态
+$msm-primary-light:  #EAF4FD;   // 极浅蓝（仅在确需底色时使用）
+
+/* ---------- 墨黑：主按钮与标题 ---------- */
+$msm-ink:            #111B21;   // Logo 的深色
+$msm-ink-dark:       #000000;   // 主按钮按下态
 
 /* ---------- 文字 ---------- */
-$msm-text:           #111B21;
-$msm-text-secondary: #667781;
-$msm-text-muted:     #8696A0;
+$msm-text:           #111B21;   // 页面大标题、列表主标题
+$msm-text-secondary: #667781;   // 描述、次级信息（时间 / 作者）
+$msm-text-muted:     #8696A0;   // 输入框占位符、极次要信息、右箭头
+$msm-text-faint:     #B7C2CB;   // 禁用
 $msm-text-inverse:   #FFFFFF;
 
-/* ---------- 背景与分隔 ---------- */
-$msm-background:     #F7F9FA;
-$msm-surface:        #FFFFFF;
-$msm-surface-sunken: #F0F4F6;
-$msm-divider:        #E9EDEF;
+/* ---------- 背景与边框 ---------- */
+$msm-background:     #F5F5F5;   // 页面底（用来衬托纯白卡片）
+$msm-surface:        #FFFFFF;   // 卡片 / 列表 / 搜索框 / 输入框
+$msm-surface-sunken: #F5F5F5;   // 按下态
+$msm-divider:        #E0E0E0;   // 1px 极细分割线
 
-/* ---------- 语义色 ---------- */
-$msm-success:        #21C063;
-$msm-danger:         #EA4335;
-$msm-warning:        #F5A623;
+/* ---------- 语义色：只用于状态 ---------- */
+$msm-success:        #388E3C;   // 成功 / 已发送
+$msm-danger:         #D32F2F;   // 错误 / 失败 / 删除 / 退出登录
+$msm-warning:        #F57C00;
 
-/* ---------- 圆角 ---------- */
-$msm-radius-sm:      10px;
-$msm-radius-md:      16px;
-$msm-radius-lg:      24px;
-$msm-radius-pill:    999px;
+/* ---------- 在线状态 ----------
+   绿色已被「成功」占用，在线改用中性墨色。 */
+$msm-online:         #111B21;   // 在线 = 墨色实心点
+$msm-offline:        #CCCCCC;   // 离线 = 浅灰
+
+/* ---------- 圆角（克制） ---------- */
+$msm-radius-sm:      0px;       // 直角
+$msm-radius-md:      2px;       // 卡片 / 按钮 / 输入框
+$msm-radius-lg:      4px;       // 搜索框
+$msm-radius-pill:    999px;     // 仅未读角标
 
 /* ---------- 间距（8pt 栅格） ---------- */
 $msm-space-xs:       4px;
@@ -48,17 +62,26 @@ $msm-space-xl:       24px;
 $msm-space-2xl:      32px;
 
 /* ---------- 字号 ---------- */
-$msm-font-display:   28px;
-$msm-font-title:     20px;
-$msm-font-heading:   17px;
+$msm-font-display:   24px;
+$msm-font-title:     18px;
+$msm-font-heading:   16px;
 $msm-font-body:      15px;
 $msm-font-note:      13px;
 $msm-font-caption:   11px;
 
-/* ---------- 阴影 ---------- */
-$msm-shadow-sm:      0 1px 2px rgba(17, 27, 33, 0.06);
-$msm-shadow-md:      0 2px 12px rgba(17, 27, 33, 0.08);
-$msm-shadow-lg:      0 8px 28px rgba(47, 143, 229, 0.18);
+/* ---------- 列表密度（行高自适应，靠 padding 控制） ---------- */
+$msm-row-pad-y:      16px;      // 列表行垂直内边距
+$msm-row-pad-x:      20px;      // 列表行水平内边距
+$msm-page-pad:       20px;      // 页面左右留白
+$msm-avatar:         40px;      // 列表头像
+$msm-avatar-lg:      60px;      // 个人资料头像
+$msm-avatar-radius:  0px;       // 直角（正方形头像）
+$msm-tap-min:        44px;      // 最小可点区域
+
+/* ---------- 阴影：本方案不使用阴影 ---------- */
+$msm-shadow-sm:      none;
+$msm-shadow-md:      none;
+$msm-shadow-lg:      none;
 
 /* ---------- 页面顶部安全区（自定义导航栏用） ---------- */
 $msm-status-bar:     var(--status-bar-height, 0px);
