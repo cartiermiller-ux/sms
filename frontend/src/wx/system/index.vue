@@ -20,7 +20,6 @@
 	} from '@/manifest.json'
 	// #ifdef APP-PLUS
 	import appUpgrade from '@/common/appUpgrade.js';
-	const TUICalling = uni.requireNativePlugin("TUICallingUniPlugin-TUICallingModule");
 	// #endif
 	export default {
 		data() {
@@ -114,11 +113,6 @@
 					});
 					// #ifdef H5
 					this.$socketTask.socketTaskClose()
-					// #endif
-					// #ifdef APP-PLUS
-					TUICalling.logout((res) => {
-					    console.log(JSON.stringify(res))
-					})
 					// #endif
 				})
 			},

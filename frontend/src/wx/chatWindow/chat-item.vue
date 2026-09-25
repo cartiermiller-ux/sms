@@ -3,14 +3,22 @@
 	<cell>
 		<!-- #endif -->
 		<view class="zfb-tk-item" :class="[{ 'zfb-tk-msgleft': item.type == 1 }, { 'zfb-tk-msgright': item.type == 2 }, { 'zfb-tk-msgcenter': item.type == 3 }]">
+			<!-- 日期分隔线：只在「跨天」的那一条消息前出现，整行居中 -->
+			<view class="zfb-tk-datesep" v-if="dateLabel"><text class="zfb-tk-datesep-text">{{ dateLabel }}</text></view>
 			<openTool :class="[{ 'openTool-msgleft': item.type == 1 }, { 'openTool-msgright': item.type == 2 }]" :talkTo="talkTo" :ref="'toolx'+itemKey" :data="item" :itemKey="itemKey"></openTool>
 			<image class="zfb-tk-avatar" @click="gochatOne(item)" v-if="item.type !== 3" :src="item.portrait" mode="aspectFill"></image>
 			<view class="zfb-tk-item-contentx" @longpress="longpressItem($event,itemKey,item)">
 				<view class="zfb-tk-item-contentx-c">
 					<view class="zfb-tk-time-notsend wxfont fssb" @click="tryagin(item, itemKey)" v-if="item.sendtype && item.sendtype == 'error'"></view>
 					<view class="zfb-tk-item-contentx-c-tool">
+						<!-- 群聊里对方的消息：昵称与「群主 / 管理员」标识同一行，标识用小字 -->
+						<view class="zfb-tk-name" v-if="senderName">
+							<text class="zfb-tk-name-text">{{ senderName }}</text>
+							<text class="zfb-tk-role" v-if="roleLabel">{{ roleLabel }}</text>
+						</view>
 						<view class="zfb-tk-item-c" v-if="item.msgType == 'TEXT'">
 							<text>{{ item.content }}</text>
+							<view class="zfb-tk-ts" v-if="clockInline">{{ clockText }}</view>
 						</view>
 						<view class="zfb-tk-item-c" v-if="item.msgType == 'ALERT'">
 							<text>{{ item.content }}</text>
@@ -36,13 +44,26 @@
 						<view v-if="item.msgType == 'TRTC_VOICE_END'" class="zfb-tk-item-c-TRTC_VOICE_END" @click="sendVoiceCall">
 							<view class="zfb-tk-TRTC zfb-tk-item-c">
 								<view class="wxfont yuyin3"></view>
-								<text>语音通话 时长{{item.content}}</text>
+								<text>{{ callRecordText('语音通话') }}</text>
 							</view>
 						</view> 
 						<view v-if="item.msgType == 'TRTC_VIDEO_END'" class="zfb-tk-item-c-TRTC_VIDEO_END" @click="sendVideoCall">
 							<view class="zfb-tk-TRTC zfb-tk-item-c">
 								<view class="wxfont shipin"></view>
-								<text>视频通话 时长{{item.content}}</text>
+								<text>{{ callRecordText('视频通话') }}</text>
+							</view>
+						</view>
+						<!-- 呼叫发起气泡：只做展示，不绑点击，避免误触重拨 -->
+						<view v-if="item.msgType == 'TRTC_VOICE_START'" class="zfb-tk-item-c-TRTC_VOICE_START">
+							<view class="zfb-tk-TRTC zfb-tk-item-c">
+								<view class="wxfont yuyin3"></view>
+								<text>发起语音通话</text>
+							</view>
+						</view>
+						<view v-if="item.msgType == 'TRTC_VIDEO_START'" class="zfb-tk-item-c-TRTC_VIDEO_START">
+							<view class="zfb-tk-TRTC zfb-tk-item-c">
+								<view class="wxfont shipin"></view>
+								<text>发起视频通话</text>
 							</view>
 						</view>
 						<view class="zfb-tk-item-c-video" v-if="item.msgType == 'VIDEO'" @click="openVideo(returnParse(item.content).videoUrl)">
@@ -62,7 +83,8 @@
 							<view class="zfb-tk-item-c-CARD-card">推荐名片</view>
 						</view>
 						<view v-if="showTrs" class="zfb-tk-item-c-VOICE-tras-text">{{returnParse(item.content).text}}</view>
-						<view class="zfb-tk-time" v-if="item.time">{{ timeDetia(item.time) }}</view>
+						<!-- 图片 / 视频 / 位置 / 名片等：时间贴在内容块右下角内部 -->
+						<view class="zfb-tk-ts zfb-tk-ts--over" v-if="clockOverlay">{{ clockText }}</view>
 					</view>
 				</view>
 			</view>
@@ -73,10 +95,27 @@
 </template>
 
 <script>
-// #ifdef APP-PLUS
-const TUICalling = uni.requireNativePlugin("TUICallingUniPlugin-TUICallingModule");
-// #endif
 import openTool from './openTool.vue'
+import { formatClock } from '@/common/msm-format.js';
+import msmCall from '@/common/msm-call.js';
+
+/**
+ * 把后端可能给出的「角色」取值统一成中文小字标识。
+ * 目前线上后端（chat-api.jar）在 /group/getInfo 里**没有**返回任何角色字段，
+ * 所以下面这些 key 是为「后端补字段后自动生效」预留的；
+ * 在补字段之前，只有「群主」可以通过群信息里的群主 id 推断出来（见 groupMasterId）。
+ */
+const ROLE_LABELS = {
+	master: '群主',
+	owner: '群主',
+	群主: '群主',
+	1: '群主',
+	admin: '管理员',
+	administrator: '管理员',
+	管理员: '管理员',
+	2: '管理员'
+};
+
 export default {
 	emits: ['tryagin','longpressItem'],
 	name: 'chat-item',
@@ -98,6 +137,51 @@ export default {
 		longTapItemKey: {
 			type: [Number,String],
 			default:''
+		},
+		/** 跨天时由父组件传入的日期分隔线文案（今天 / 昨天 / 9月9日），同一天为空 */
+		dateLabel: {
+			type: String,
+			default: ''
+		}
+	},
+	computed: {
+		/** 气泡内右下角的时刻，如 1:41 */
+		clockText() {
+			return this.item && this.item.time ? formatClock(this.item.time) : '';
+		},
+		/** 居中系统提示（XXX 创建了群聊）不显示时刻 */
+		isCenter() {
+			return this.item.type === 3;
+		},
+		/** 纯文字气泡：时刻跟在文字最后一行右侧 */
+		clockInline() {
+			return !this.isCenter && this.item.msgType === 'TEXT' && !!this.clockText;
+		},
+		/** 图片/视频/位置/名片等：时刻浮在内容块右下角 */
+		clockOverlay() {
+			return !this.isCenter && this.item.msgType !== 'TEXT' && !!this.clockText;
+		},
+		/** 群聊里「对方」的消息才在气泡上方显示昵称；1v1 与自己的消息不显示 */
+		senderName() {
+			if (!this.showSenderMeta) return '';
+			return this.item.nickName || '';
+		},
+		/** 昵称旁边的角色小字标识（群主 / 管理员），没有数据时为空 */
+		roleLabel() {
+			if (!this.showSenderMeta) return '';
+			return this.resolveRole(this.item);
+		},
+		showSenderMeta() {
+			return this.talkTo && this.talkTo.windowType === 'GROUP' && this.item.type === 1;
+		},
+		/** 群主 id：后端补字段后这里能拿到值，用来给群主的消息打「群主」标识 */
+		groupMasterId() {
+			const all = this.$store && this.$store.state ? this.$store.state.chatDatalist : null;
+			if (!all || !this.talkTo) return '';
+			const obj = all[this.talkTo.userId];
+			if (!obj || !obj.groupInfo) return '';
+			const g = obj.groupInfo;
+			return g.masterId || g.masterUserId || g.master || '';
 		}
 	},
 	watch:{
@@ -115,99 +199,27 @@ export default {
 		};
 	},
 	methods: {
-		sendVoiceCall(){
-			//发起语音
-			uni.showLoading({
-				title:'发起语音通话'
-			})
-			var formdata={
-				userId: this.talkTo.userId, 
-				msgType: "TRTC_VOICE_START", 
-				content: "TRTC_VOICE_START" 
-			}
-			this.$http.request({
-				url: '/chat/sendMsg',
-				method: 'POST',
-				data: JSON.stringify(formdata),
-				success: (res) => {
-					if(res.data.code=='200'){
-						if(res.data.data.status!=='0'){
-							uni.showToast({
-								title:res.data.data.statusLabel,
-								icon:'none'
-							})
-							return
-						}
-						var userInfo=res.data.data.userInfo
-						var data={
-							userId:userInfo.userId,
-							trtcId:userInfo.trtcId,
-							nickName:userInfo.nickName,
-							portrait:userInfo.portrait,
-							startTime:new Date().getTime(),
-							type:'audio'
-						}
-						uni.setStorage({
-							key: 'call',
-							data: JSON.stringify(data),
-							success: function () {
-								console.log('success');
-								TUICalling.call({
-								    userID: userInfo.trtcId,
-								    type: 1
-								})
-							}
-						});
-						
-					}
-				}
+		sendVoiceCall() {
+			// 发起语音通话：信令与跳转都由 msmCall 统一处理
+			const all = this.$store.state.chatDatalist || {};
+			const chat = all[this.talkTo.userId] || {};
+			const peer = (this.talkTo.windowType === 'GROUP' ? chat.groupInfo : chat.fromInfo) || {};
+			msmCall.startCall({
+				userId: this.talkTo.userId,
+				nickName: peer.nickName || '',
+				portrait: peer.portrait || '',
+				media: 'voice'
 			});
 		},
-		sendVideoCall(){
-			//发起视频
-			uni.showLoading({
-				title:'发起视频通话'
-			})
-			var formdata={
-				userId: this.talkTo.userId, 
-				msgType: "TRTC_VIDEO_START", 
-				content: "TRTC_VIDEO_START" 
-			}
-			this.$http.request({
-				url: '/chat/sendMsg',
-				method: 'POST',
-				data: JSON.stringify(formdata),
-				success: (res) => {
-					if(res.data.code=='200'){
-						if(res.data.data.status!=='0'){
-							uni.showToast({
-								title:res.data.data.statusLabel,
-								icon:'none'
-							})
-							return
-						}
-						var userInfo=res.data.data.userInfo
-						var data={
-							userId:userInfo.userId,
-							trtcId:userInfo.trtcId,
-							nickName:userInfo.nickName,
-							portrait:userInfo.portrait,
-							startTime:new Date().getTime(),
-							type:'video'
-						}
-						uni.setStorage({
-							key: 'call',
-							data: JSON.stringify(data),
-							success: function () {
-								console.log('success');
-								TUICalling.call({
-								    userID: userInfo.trtcId,
-								    type: 2
-								})
-							}
-						});
-					}
-				}
+		sendVideoCall() {
+			const all = this.$store.state.chatDatalist || {};
+			const chat = all[this.talkTo.userId] || {};
+			const peer = (this.talkTo.windowType === 'GROUP' ? chat.groupInfo : chat.fromInfo) || {};
+			msmCall.startCall({
+				userId: this.talkTo.userId,
+				nickName: peer.nickName || '',
+				portrait: peer.portrait || '',
+				media: 'video'
 			});
 		},
 		goAddfriend(e){
@@ -269,59 +281,29 @@ export default {
 				this.$refs['toolx'+this.itemKey].showTab();
 			}
 		},
-		timeDetia: function(date) {
-			var time;
-			var d = new Date(date);
-			var n = new Date();
-			//获取时间戳
-			var dd = d.getTime();
-			var h = d.getHours();
-			var m = d.getMinutes();
-			var Y = d.getFullYear();
-			var M = d.getMonth() + 1;
-			var D = d.getDate();
-			//现在时间
-			var nn = n.getTime();
-			var hh = n.getHours();
-			var mm = n.getMinutes();
-			var YY = n.getFullYear();
-			var MM = n.getMonth() + 1;
-			var DD = n.getDate();
-
-			if (D == DD && M == MM && Y == YY) {
-				if (h < 10) {
-					h = '0' + h;
-				}
-				if (m < 10) {
-					m = '0' + m;
-				}
-				time = h + ':' + m;
-				return time;
-			} else if (D + 1 == DD && M == MM && Y == YY) {
-				if (h < 10) {
-					h = '0' + h;
-				}
-				if (m < 10) {
-					m = '0' + m;
-				}
-				time = '昨天' + ' ' + h + ':' + m;
-				return time;
-			} else {
-				if (M < 10) {
-					M = '0' + M;
-				}
-				if (D < 10) {
-					D = '0' + D;
-				}
-				if (h < 10) {
-					h = '0' + h;
-				}
-				if (m < 10) {
-					m = '0' + m;
-				}
-				time = Y + '年' + M + '月' + D + '日' + ' ' + h + ':' + m;
-				return time;
+		/**
+		 * 通话记录气泡的文案。
+		 * 内容有两种来源：
+		 *   1) 新流程 —— content 是信令 JSON 信封，时长在 sig.dur 里；
+		 *   2) 旧记录 —— content 直接就是「3分」这样的时长文本。
+		 * 不做这个区分的话，新流程的 END 气泡会把一整串 JSON 显示出来。
+		 */
+		callRecordText(base) {
+			const sig = msmCall.parseSignal(this.item.content);
+			const dur = sig ? sig.dur : this.item.content;
+			return dur ? base + ' 时长' + dur : base;
+		},
+		/** 解析发送人在群里的角色：优先用后端直接给的字段，其次用群主 id 推断 */
+		resolveRole(item) {
+			const raw = item.memberRole || item.userRole || item.role || item.groupRole || '';
+			if (raw !== '' && raw !== null && raw !== undefined) {
+				const hit = ROLE_LABELS[String(raw).toLowerCase()] || ROLE_LABELS[String(raw)];
+				// 必须挡掉原型链上的方法（toString 之类），否则会把函数当标签渲染
+				if (typeof hit === 'string') return hit;
 			}
+			const masterId = this.groupMasterId;
+			if (masterId && String(item.personId) === String(masterId)) return '群主';
+			return '';
 		}
 	}
 };
@@ -331,12 +313,24 @@ export default {
 $avatarsize: 72rpx;   /* 36px */
 $border-radius: 16rpx; /* 8px */
 
+/* ============================================================
+   消息气泡 —— 左右分栏 + 极简纯色 + 时间内嵌
+   1. 一条消息 = 一行 flex：对方 justify-content:flex-start，自己 flex-end
+   2. 行间距固定 4px，不用系统默认大留白
+   3. 气泡只有底色：对方纯白，自己品牌淡蓝，无背景图无阴影
+   4. 群聊昵称与「群主 / 管理员」标识同一行，标识 12px
+   5. 时刻在气泡内部右下角（灰色 10px），日期只在跨天处出现分隔线
+   ============================================================ */
+
 .zfb-tk-item {
 	position: relative;
 	display: flex;
 	align-items: flex-start;
 	flex-wrap: wrap;
-	margin: 6px 0;
+	width: 100%;
+	box-sizing: border-box;
+	/* 压缩留白：相邻气泡之间只留 4px */
+	margin: 4px 0 0;
 }
 
 .zfb-tk-item .zfb-tk-item-c text {
@@ -348,10 +342,46 @@ $border-radius: 16rpx; /* 8px */
 	text-align: left;
 }
 
+/* 对方：整行靠左 */
 .zfb-tk-msgleft {
-	float: left;
 	display: flex;
 	flex-direction: row;
+	justify-content: flex-start;
+}
+
+/* 自己：整行靠右（用 order 把头像换到右边，而不是 row-reverse + float） */
+.zfb-tk-msgright {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+}
+
+.zfb-tk-msgright .zfb-tk-avatar {
+	order: 2;
+	margin-left: 10rpx;
+}
+
+.zfb-tk-msgright .zfb-tk-item-contentx {
+	order: 1;
+}
+
+/* ---------- 日期分隔线（只在跨天处出现） ---------- */
+.zfb-tk-datesep {
+	flex: 0 0 100%;
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	margin: 10px 0 6px;
+}
+
+.zfb-tk-datesep-text {
+	font-size: 11px;
+	line-height: 18px;
+	color: var(--msm-text-muted);
+	background: var(--msm-divider-light);
+	border-radius: var(--msm-radius-pill);
+	padding: 0 10px;
 }
 
 .zfb-tk-avatar {
@@ -365,22 +395,11 @@ $border-radius: 16rpx; /* 8px */
 	margin-right: 10rpx;
 }
 
-.zfb-tk-msgright .zfb-tk-avatar {
-	margin-left: 10rpx;
-}
-
-.zfb-tk-msgright {
-	float: right;
-	display: flex;
-	flex-direction: row-reverse;
-}
-
 .zfb-tk-msgcenter {
 	font-size: 12px;
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
-	float: left;
 	width: 100%;
 	color: var(--msm-text-muted);
 }
@@ -400,37 +419,71 @@ $border-radius: 16rpx; /* 8px */
 	line-height: 1.4;
 }
 
+/* 对方：纯白 */
 .zfb-tk-msgleft .zfb-tk-item-c {
-	background: var(--msm-surface);
+	background: var(--msm-bubble-other);
 	color: var(--msm-text);
-	box-shadow: 0 1px 2px rgba(17, 27, 33, .06);
 }
 
+/* 自己：品牌淡蓝，文字保持墨黑（蓝只做点缀，不靠反白撑对比） */
 .zfb-tk-msgright .zfb-tk-item-c {
-	background: var(--msm-primary);
+	background: var(--msm-bubble-self);
+	color: var(--msm-text);
+}
+
+/* ---------- 群聊：昵称 + 角色小字（同一行） ---------- */
+.zfb-tk-name {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: 3px;
+	max-width: 100%;
+}
+
+.zfb-tk-name-text {
+	font-size: 12px;
+	line-height: 16px;
+	font-weight: 600;
+	color: var(--msm-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.zfb-tk-role {
+	font-size: 12px;
+	line-height: 14px;
+	color: var(--msm-text-secondary);
+	background: var(--msm-divider-light);
+	border-radius: var(--msm-radius-sm);
+	padding: 1px 4px;
+	margin-left: 6px;
+	flex: none;
+}
+
+/* ---------- 气泡内右下角的时刻（灰色 10px） ---------- */
+.zfb-tk-ts {
+	float: right;
+	margin: 3px 0 0 8px;
+	font-size: 10px;
+	line-height: 12px;
+	color: var(--msm-text-muted);
+	white-space: nowrap;
+}
+
+/* 图片 / 视频 / 位置 / 名片：浮在内容块右下角内部 */
+.zfb-tk-ts--over {
+	float: none;
+	position: absolute;
+	right: 6px;
+	bottom: 6px;
+	margin: 0;
 	color: #fff;
+	background: rgba(17, 27, 33, .45);
+	border-radius: 3px;
+	padding: 1px 4px;
 }
 
-.zfb-tk-username {
-	color: var(--msm-text-muted);
-}
-
-.zfb-tk-time {
-	font-size: 11px;
-	text-align: center;
-	color: var(--msm-text-muted);
-	width: 100%;
-	box-sizing: border-box;
-	margin-top: 3px;
-}
-
-.zfb-tk-msgright .zfb-tk-time {
-	text-align: right;
-}
-
-.zfb-tk-msgleft .zfb-tk-time {
-	text-align: left;
-}
 .zfb-tk-time-notsend {
 	font-size: 24px;
 	color: var(--msm-danger);
@@ -615,7 +668,7 @@ $border-radius: 16rpx; /* 8px */
 .zfb-tk-TRTC .wxfont{
 	font-size: 42rpx;
 }
-.zfb-tk-item-contentx-c-tool{display: flex;flex-direction: column;}
+.zfb-tk-item-contentx-c-tool{display: flex;flex-direction: column;position: relative;}
 .zfb-tk-msgleft .zfb-tk-item-contentx-c-tool{
 	align-items: flex-start;
 }

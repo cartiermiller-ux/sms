@@ -74,11 +74,28 @@ function Path-Me {
   return $p
 }
 
+function Path-Settings {
+  # 齿轮：外圆 + 内圆 + 6 根轮齿
+  # （三栏结构里的「设置」tab）
+  $p = New-Object System.Drawing.Drawing2D.GraphicsPath
+  E $p 5.6 5.6 12.8 12.8                  # 外圆 r=6.4
+  $p.StartFigure()
+  E $p 9.8 9.8 4.4 4.4                    # 内圆 r=2.2
+  for ($i = 0; $i -lt 6; $i++) {
+    $a  = $i * 60 * [Math]::PI / 180
+    $x1 = 12 + 6.4 * [Math]::Cos($a); $y1 = 12 + 6.4 * [Math]::Sin($a)
+    $x2 = 12 + 9.2 * [Math]::Cos($a); $y2 = 12 + 9.2 * [Math]::Sin($a)
+    $p.StartFigure()
+    L $p $x1 $y1 $x2 $y2
+  }
+  return $p
+}
+
+# 三栏结构：消息 / 通讯录 / 设置
 $icons = @(
   @{ Name = 'chat';     Fn = 'Path-Chat'     },
   @{ Name = 'contacts'; Fn = 'Path-Contacts' },
-  @{ Name = 'discover'; Fn = 'Path-Discover' },
-  @{ Name = 'me';       Fn = 'Path-Me'       }
+  @{ Name = 'settings'; Fn = 'Path-Settings' }
 )
 $variants = @(
   @{ Suffix = '';    Color = '#8696A0' },

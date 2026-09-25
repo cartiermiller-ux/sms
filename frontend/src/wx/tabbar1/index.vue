@@ -1,54 +1,23 @@
 <template>
 	<view class="msm-page">
-		<!-- ============ 导航栏 ============ -->
-		<view class="msm-header msm-header--flat">
-			<view class="msm-header__bar">
-				<view class="msm-header__left">
-					<view class="msm-header__brand">M<em>sm</em></view>
-				</view>
-				<view class="msm-header__actions">
-					<view class="msm-icon-btn" @click="openMore">
-						<uni-icons type="plusempty" size="20" color="#111B21"></uni-icons>
-					</view>
-					<!-- 右上角用户头像（圆形）—— 参考 V2EX 首页头部 -->
-					<view class="msm-avatar-btn" @click="goMe">
-						<image
-							v-if="userInfo && userInfo.portrait"
-							class="msm-avatar-btn__img"
-							:src="userInfo.portrait"
-							mode="aspectFill"
-						></image>
-						<uni-icons v-else type="staff" size="19" color="#8696A0"></uni-icons>
-					</view>
-				</view>
-			</view>
+		<!-- ============ 统一顶栏：Logo ｜ 搜索胶囊 ｜ + ｜ 头像 ============ -->
+		<msm-topbar
+			:value="keyword"
+			:show-plus="true"
+			placeholder="搜索聊天或联系人"
+			@input="onSearchInput"
+			@plus="openMore"
+		></msm-topbar>
 
-			<!-- 搜索 -->
-			<view class="msm-search">
-				<uni-icons class="msm-search__icon" type="search" size="15" color="#8696A0"></uni-icons>
-				<input
-					class="msm-search__input"
-					v-model="keyword"
-					type="text"
-					placeholder="搜索聊天或联系人"
-					placeholder-class="msm-search__ph"
-					confirm-type="search"
-				/>
-				<view v-if="keyword" class="msm-search__clear" @click="keyword = ''">
-					<uni-icons type="clear" size="15" color="#8696A0"></uni-icons>
-				</view>
-			</view>
-
-			<!-- 标签页（自带下划线指示，同时充当导航栏底部分割线） -->
-			<view class="msm-tabs">
-				<view
-					v-for="(t, i) in tabs"
-					:key="i"
-					class="msm-tabs__item"
-					:class="{ 'msm-tabs__item--active': tabIndex === i }"
-					@click="tabIndex = i"
-				>{{ t }}</view>
-			</view>
+		<!-- 标签页（顶栏已提供分割线，这里用 --plain 去掉重复边框） -->
+		<view class="msm-tabs msm-tabs--pad msm-tabs--plain">
+			<view
+				v-for="(t, i) in tabs"
+				:key="i"
+				class="msm-tabs__item"
+				:class="{ 'msm-tabs__item--active': tabIndex === i }"
+				@click="tabIndex = i"
+			>{{ t }}</view>
 		</view>
 
 		<!-- ============ 会话列表 ============ -->
@@ -122,7 +91,7 @@ export default {
 		return {
 			keyword: '',
 			tabIndex: 0,
-			tabs: ['全部', '未读', '群聊'],
+			tabs: ['全部', '未读', '群聊', '置顶'],
 			longTapItemKey: 0,
 			tranMsg: '',
 			list: [],
@@ -164,18 +133,21 @@ export default {
 			}
 			if (this.tabIndex === 1) arr = arr.filter(v => Number(v.num) > 0);
 			if (this.tabIndex === 2) arr = arr.filter(v => v.windowType === 'GROUP');
+			if (this.tabIndex === 3) arr = arr.filter(v => v.top === 'Y');
 			return arr;
 		},
 		emptyTitle() {
 			if (this.keyword) return '没有找到相关聊天';
 			if (this.tabIndex === 1) return '没有未读消息';
 			if (this.tabIndex === 2) return '还没有群聊';
+			if (this.tabIndex === 3) return '没有置顶会话';
 			return '还没有任何聊天';
 		},
 		emptyDesc() {
 			if (this.keyword) return '换个关键词试试';
 			if (this.tabIndex === 1) return '所有消息都看过了';
 			if (this.tabIndex === 2) return '拉上朋友建个群吧';
+			if (this.tabIndex === 3) return '长按会话可以置顶';
 			return '开始一段新的对话吧';
 		}
 	},
@@ -206,14 +178,14 @@ export default {
 			}
 		},
 		topicReply: {
+			// 底部从 4 栏砍成 3 栏后，index:2 由「发现」变成了「设置」，
+			// 朋友圈未读再挂到 tab 角标上会跑到设置上，故此处不再设置 tab 角标；
+			// 改为在设置页的「朋友圈」那一行显示数量（见 wx/tabbar4/index.vue）。
 			deep: true,
 			immediate: false,
 			handler(val) {
-				if (val.count && val.count > 0) {
-					uni.setTabBarBadge({ index: 2, text: val.count.toString() });
-				} else {
-					uni.removeTabBarBadge({ index: 2 });
-				}
+				// 清掉历史遗留的角标（旧版本可能已经设过 index:2）
+				uni.removeTabBarBadge({ index: 2 });
 			}
 		},
 		friendApply: {
@@ -308,13 +280,9 @@ export default {
 				return [];
 			}
 		},
-		focusSearch() {
-			// 点放大镜/搜索框时把关键词清空，方便重新输入
-			this.keyword = '';
-		},
-		goMe() {
-			// 右上角头像 -> 切到「我」（账号中心）
-			uni.switchTab({ url: '../tabbar4/index' });
+		/** 顶栏搜索框是受控组件，输入值回写到本页 keyword 上 */
+		onSearchInput(v) {
+			this.keyword = v || '';
 		},
 		openMore() {
 			if (this.$refs['trtw']) this.$refs['trtw'].showTab();
@@ -334,32 +302,14 @@ export default {
 
 <style lang="scss" scoped>
 	/* ============================================================
-	   消息页 —— V2EX 风格
-	   列表行、头像、角标等基础件在 App.vue 的全局样式里，
+	   消息页 —— 三栏顶栏 + 下划线标签页 + 卡片列表
+	   顶栏与列表行的基础件都在 App.vue 的全局样式里，
 	   这里只放本页独有的部分。
 	   ============================================================ */
 	.msm-page {
 		min-height: 100vh;
 		background: var(--msm-background);
 		padding-bottom: 20px;
-	}
-
-	/* ---------- 搜索框内的输入 ---------- */
-	.msm-search__input {
-		flex: 1;
-		min-width: 0;
-		font-size: 13px;
-		color: var(--msm-text);
-		background: transparent;
-	}
-
-	.msm-search__ph {
-		color: var(--msm-text-faint);
-		font-size: 13px;
-	}
-
-	.msm-search__clear {
-		padding-left: 6px;
 	}
 
 	/* ---------- 会话行内头像的图片本体 ---------- */

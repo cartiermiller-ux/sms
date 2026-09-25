@@ -2,6 +2,7 @@ import http from '@/common/request'
 import browser from '@/common/browser'
 import store from '../store'
 import pinyin from '@/common/pinyin.js';
+import msmCall from '@/common/msm-call.js';
 export default {
 	// 获取字典
 	getdict(dict) {
@@ -325,8 +326,15 @@ export default {
 		console.log(resbody)
 		var pushType = resbody.pushType //推送类型
 		if (pushType == 'MSG') {
+			// 通话信令先交给通话模块处理：invite / accept / reject / cancel / hangup / busy
+			// 用一个独立的 k:'msm-call' 信封放在 content 里，普通聊天内容解析不出来，互不干扰
+			msmCall.onIncomingSignal({
+				msgType: resbody.msgContent.msgType,
+				content: resbody.msgContent.content,
+				fromInfo: resbody.fromInfo
+			});
 			if(resbody.msgContent.msgType=='TRTC_VOICE_START'||resbody.msgContent.msgType=='TRTC_VIDEO_START'){
-				//音视频开始拦截
+				//音视频开始拦截（「开始类」消息只是信令，不进聊天流）
 				return
 			}
 			var userId=resbody.fromInfo.userId

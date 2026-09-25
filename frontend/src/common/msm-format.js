@@ -135,6 +135,46 @@ export function formatDate(value) {
 }
 
 /**
+ * 气泡内的时间：只有时刻 HH:MM（10px 灰色，贴在气泡右下角）
+ *
+ * 为什么不带日期：日期交给聊天流中间的「日期分隔线」表达，
+ * 每条气泡再重复一次日期会让密集的对话变得很吵。
+ */
+export function formatClock(value) {
+	const d = toDate(value);
+	if (!d) return '';
+	return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+
+/**
+ * 日期分隔线的文案（聊天流正中间那条浅灰细线）
+ *   今天 / 昨天 / 前天 / 9月9日 / 2024年9月9日
+ */
+export function formatDayDivider(value, now) {
+	const d = toDate(value);
+	if (!d) return '';
+	const nowMs = typeof now === 'number' ? now : Date.now();
+	const dayGap = Math.round((dayStart(new Date(nowMs)) - dayStart(d)) / DAY);
+	if (dayGap === 0) return '今天';
+	if (dayGap === 1) return '昨天';
+	if (dayGap === 2) return '前天';
+	if (d.getFullYear() === new Date(nowMs).getFullYear()) {
+		return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+	}
+	return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+
+/**
+ * 判断两条消息是不是同一天，用来决定「在哪里插入日期分隔线」。
+ * 返回 YYYY-M-D 形式的字符串（同一天即同一个 key），无法解析时返回 ''。
+ */
+export function dayKey(value) {
+	const d = toDate(value);
+	if (!d) return '';
+	return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+
+/**
  * 未读数量：0 / 空 → ''，1–99 → 原样，>99 → '99+'
  * 配合 <MsmBadge> 或 .msm-badge 使用。
  */
@@ -165,6 +205,10 @@ export function formatMessageBrief(msg) {
 			return '[文件]';
 		case 'LOCATION':
 			return '[位置]';
+		case 'TRTC_VOICE_START':
+			return '[语音通话]';
+		case 'TRTC_VIDEO_START':
+			return '[视频通话]';
 		case 'TRTC_VOICE_END':
 			return '[语音通话]' + (content ? ' ' + content : '');
 		case 'TRTC_VIDEO_END':
@@ -180,6 +224,9 @@ export default {
 	formatListTime,
 	formatDateTime,
 	formatDate,
+	formatClock,
+	formatDayDivider,
+	dayKey,
 	formatCount,
 	formatMessageBrief
 };

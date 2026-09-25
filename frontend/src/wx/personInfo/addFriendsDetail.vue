@@ -25,9 +25,7 @@
 </template>
 
 <script>
-	// #ifdef APP-PLUS
-	const TUICalling = uni.requireNativePlugin("TUICallingUniPlugin-TUICallingModule");
-	// #endif
+	import msmCall from '@/common/msm-call.js';
 	export default {
 		data() {
 			return {
@@ -229,98 +227,20 @@
 				}
 			},
 			sendVoiceCall(){
-				//发起语音
-				uni.showLoading({
-					title:'发起语音通话'
-				})
-				var formdata={
-					userId: this.userdetail.userId, 
-					msgType: "TRTC_VOICE_START", 
-					content: "TRTC_VOICE_START" 
-				}
-				this.$http.request({
-					url: '/chat/sendMsg',
-					method: 'POST',
-					data: JSON.stringify(formdata),
-					success: (res) => {
-						if(res.data.code=='200'){
-							if(res.data.data.status!=='0'){
-								uni.showToast({
-									title:res.data.data.statusLabel,
-									icon:'none'
-								})
-								return
-							}
-							var userInfo=res.data.data.userInfo
-							var data={
-								userId:userInfo.userId,
-								trtcId:userInfo.trtcId,
-								nickName:userInfo.nickName,
-								portrait:userInfo.portrait,
-								startTime:new Date().getTime(),
-								type:'audio'
-							}
-							uni.setStorage({
-								key: 'call',
-								data: JSON.stringify(data),
-								success: function () {
-									console.log('success');
-									TUICalling.call({
-									    userID: userInfo.trtcId,
-									    type: 1
-									})
-								}
-							});
-							
-						}
-					}
+				// 发起语音通话：信令与跳转都由 msmCall 统一处理
+				msmCall.startCall({
+					userId: this.userdetail.userId,
+					nickName: this.userdetail.nickName || '',
+					portrait: this.userdetail.portrait || '',
+					media: 'voice'
 				});
 			},
 			sendVideoCall(){
-				//发起视频
-				uni.showLoading({
-					title:'发起视频通话'
-				})
-				var formdata={
-					userId: this.userdetail.userId, 
-					msgType: "TRTC_VIDEO_START", 
-					content: "TRTC_VIDEO_START" 
-				}
-				this.$http.request({
-					url: '/chat/sendMsg',
-					method: 'POST',
-					data: JSON.stringify(formdata),
-					success: (res) => {
-						if(res.data.code=='200'){
-							if(res.data.data.status!=='0'){
-								uni.showToast({
-									title:res.data.data.statusLabel,
-									icon:'none'
-								})
-								return
-							}
-							var userInfo=res.data.data.userInfo
-							var data={
-								userId:userInfo.userId,
-								trtcId:userInfo.trtcId,
-								nickName:userInfo.nickName,
-								portrait:userInfo.portrait,
-								startTime:new Date().getTime(),
-								type:'video'
-							}
-							uni.setStorage({
-								key: 'call',
-								data: JSON.stringify(data),
-								success: function () {
-									console.log('success');
-									TUICalling.call({
-									    userID: userInfo.trtcId,
-									    type: 2
-									})
-								}
-							});
-						}
-					}
+				msmCall.startCall({
+					userId: this.userdetail.userId,
+					nickName: this.userdetail.nickName || '',
+					portrait: this.userdetail.portrait || '',
+					media: 'video'
 				});
 			}
 		}

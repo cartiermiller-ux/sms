@@ -1,0 +1,564 @@
+<template>
+	<view class="page">
+		<!-- ================= 视频通话 ================= -->
+		<block v-if="isVideo">
+			<!-- 远端画面铺满 -->
+			<view class="stage">
+				<TrtcRemoteView v-if="remoteViewVisible" class="remote-view" :user-id="peerTrtcId" :view-id="REMOTE_VIEW_ID"></TrtcRemoteView>
+				<view class="stage-fallback" v-else>
+					<image class="avatar-xl" :src="peerPortrait" mode="aspectFill"></image>
+					<text class="stage-name">{{ peerName }}</text>
+					<text class="stage-tip">{{ statusText }}</text>
+				</view>
+			</view>
+			<!-- 本地画面小窗：接通后才出 -->
+			<TrtcLocalView v-if="localViewVisible" class="local-view" :view-id="LOCAL_VIEW_ID"></TrtcLocalView>
+		</block>
+
+		<!-- ================= 语音通话 ================= -->
+		<view class="audio-stage" v-else>
+			<image class="avatar-xl" :src="peerPortrait" mode="aspectFill"></image>
+			<text class="stage-name">{{ peerName }}</text>
+			<text class="stage-tip">{{ statusText }}</text>
+		</view>
+
+		<!-- 计时 -->
+		<view class="timer-bar" v-if="connected">
+			<text class="timer">{{ durationText }}</text>
+		</view>
+
+		<!-- ================= 底部操作栏 ================= -->
+		<view class="bar">
+			<!-- 被叫响铃中：接听 / 拒接 -->
+			<block v-if="phase === 'ringing'">
+				<view class="act" @click="reject">
+					<view class="act-btn act-btn--hangup"><text class="act-icon">✕</text></view>
+					<text class="act-label">拒接</text>
+				</view>
+				<view class="act" @click="accept">
+					<view class="act-btn act-btn--accept"><text class="act-icon">✓</text></view>
+					<text class="act-label">接听</text>
+				</view>
+			</block>
+
+			<!-- 通话中 / 呼叫中 -->
+			<block v-else>
+				<view class="act" @click="toggleMute">
+					<view class="act-btn" :class="{ 'act-btn--on': muted }"><text class="act-icon">{{ muted ? '🔇' : '🎙' }}</text></view>
+					<text class="act-label">{{ muted ? '已静音' : '静音' }}</text>
+				</view>
+				<view class="act" v-if="isVideo" @click="toggleCamera">
+					<view class="act-btn" :class="{ 'act-btn--on': cameraOff }"><text class="act-icon">{{ cameraOff ? '📷' : '📹' }}</text></view>
+					<text class="act-label">{{ cameraOff ? '已关摄像头' : '摄像头' }}</text>
+				</view>
+				<view class="act" v-if="isVideo" @click="switchCamera">
+					<view class="act-btn"><text class="act-icon">🔄</text></view>
+					<text class="act-label">翻转</text>
+				</view>
+				<view class="act" v-else @click="toggleSpeaker">
+					<view class="act-btn" :class="{ 'act-btn--on': speaker }"><text class="act-icon">🔊</text></view>
+					<text class="act-label">{{ speaker ? '免提' : '听筒' }}</text>
+				</view>
+				<view class="act" @click="hangup">
+					<view class="act-btn act-btn--hangup"><text class="act-icon">✕</text></view>
+					<text class="act-label">挂断</text>
+				</view>
+			</block>
+		</view>
+	</view>
+</template>
+
+<script>
+/**
+ * Msm 通话页（nvue）
+ *
+ * 为什么必须是 nvue：TRTC 的视频画面由原生组件（TXLocalViewComponent /
+ * TXRemoteViewComponent）渲染，只有 nvue 页面才能承载原生组件；vue 页面里放不进去。
+ *
+ * 状态机：
+ *   caller: entering → calling → connected → ended
+ *   callee: ringing → entering → connected → ended
+ */
+import TrtcCloud, { TRTCAppScene, TRTCAudioRoute, TRTCVideoStreamType } from '@/common/TrtcCloud/lib/index.js';
+import TrtcLocalView from '@/common/TrtcCloud/view/TrtcLocalView.nvue';
+import TrtcRemoteView from '@/common/TrtcCloud/view/TrtcRemoteView.nvue';
+import msmCall from '@/common/msm-call.js';
+
+export default {
+	components: { TrtcLocalView, TrtcRemoteView },
+	data() {
+		return {
+			LOCAL_VIEW_ID: 'msm-local-view',
+			REMOTE_VIEW_ID: 'msm-remote-view',
+
+			role: 'caller',
+			media: 'video',
+			roomId: 0,
+			peerId: '',
+			peerName: '',
+			peerPortrait: '',
+
+			phase: 'entering', // entering | calling | ringing | connected | ended
+			connected: false,
+			localViewVisible: false,
+			remoteViewVisible: false,
+
+			muted: false,
+			cameraOff: false,
+			frontCamera: true,
+			speaker: true,
+
+			startAt: 0,
+			elapsed: 0,
+			timer: null,
+			trtc: null,
+			remoteUserId: '',
+			signReady: false
+		};
+	},
+	computed: {
+		isVideo() {
+			return this.media === 'video';
+		},
+		peerTrtcId() {
+			// 后端 /trtc/getSign 的 userId 带 'u' 前缀（AppConstants.REDIS_TRTC_USER）
+			return this.remoteUserId || ('u' + this.peerId);
+		},
+		statusText() {
+			switch (this.phase) {
+				case 'entering':
+					return '正在连接…';
+				case 'calling':
+					return '正在等待对方接听…';
+				case 'ringing':
+					return this.isVideo ? '邀请你视频通话' : '邀请你语音通话';
+				case 'connected':
+					return '通话中';
+				default:
+					return '通话已结束';
+			}
+		},
+		durationText() {
+			const s = this.elapsed;
+			const m = Math.floor(s / 60);
+			const r = s % 60;
+			return (m < 10 ? '0' + m : '' + m) + ':' + (r < 10 ? '0' + r : '' + r);
+		}
+	},
+	onLoad(options) {
+		this.role = options.role || 'caller';
+		this.media = options.media || 'video';
+		this.roomId = Number(options.roomId || 0);
+		this.peerId = decodeURIComponent(options.peerId || '');
+		this.peerName = decodeURIComponent(options.peerName || '');
+		this.peerPortrait = decodeURIComponent(options.peerPortrait || '');
+		this.speaker = this.isVideo;
+		// 记录到本地状态，便于其它页面判断「正在通话中」
+		msmCall.setActive({
+			role: this.role,
+			media: this.media,
+			roomId: this.roomId,
+			peerId: this.peerId,
+			peerName: this.peerName,
+			peerPortrait: this.peerPortrait,
+			phase: this.role === 'callee' ? 'ringing' : 'calling',
+			startAt: Date.now()
+		});
+		if (this.role === 'callee') {
+			this.phase = 'ringing';
+		} else {
+			this.phase = 'calling';
+			this.enterRoom();
+		}
+		uni.$on(msmCall.EVT_SIGNAL, this.onPeerSignal);
+		// 通话中禁止熄屏
+		// #ifdef APP-PLUS
+		plus.device.setWakelock(true);
+		// #endif
+	},
+	onUnload() {
+		uni.$off(msmCall.EVT_SIGNAL, this.onPeerSignal);
+		this.stopTimer();
+		this.leaveRoom();
+		msmCall.clearActive();
+		// #ifdef APP-PLUS
+		plus.device.setWakelock(false);
+		// #endif
+	},
+	methods: {
+		/* ---------------- 进房 / 退房 ---------------- */
+
+		/**
+		 * 安卓 6.0+ 的摄像头 / 麦克风属于运行时权限，不主动申请的话
+		 * TRTC 进房后采集会直接失败（画面全黑、对方听不到）。
+		 */
+		requestDevicePermissions() {
+			return new Promise((resolve) => {
+				// #ifdef APP-PLUS
+				if (plus.os.name !== 'Android') {
+					resolve();
+					return;
+				}
+				const wanted = ['android.permission.RECORD_AUDIO'];
+				if (this.isVideo) wanted.unshift('android.permission.CAMERA');
+				plus.android.requestPermissions(
+					wanted,
+					() => resolve(),
+					() => resolve()
+				);
+				// #endif
+				// #ifndef APP-PLUS
+				resolve();
+				// #endif
+			});
+		},
+
+		async enterRoom() {
+			if (this.signReady) return;
+			this.signReady = true;
+			try {
+				await this.requestDevicePermissions();
+				const sign = await msmCall.fetchSign();
+				this.remoteUserId = this.peerTrtcId;
+				this.trtc = TrtcCloud.createInstance();
+				this.bindEvents();
+				this.trtc.enterRoom(
+					{
+						sdkAppId: sign.sdkAppId,
+						userId: sign.userId,
+						userSig: sign.userSig,
+						roomId: this.roomId
+					},
+					this.isVideo ? TRTCAppScene.TRTCAppSceneVideoCall : TRTCAppScene.TRTCAppSceneAudioCall
+				);
+			} catch (e) {
+				this.signReady = false;
+				uni.showModal({
+					title: '无法发起通话',
+					content: e && e.message ? e.message : '获取通话签名失败',
+					showCancel: false,
+					success: () => {
+						this.finish(true);
+					}
+				});
+			}
+		},
+
+		bindEvents() {
+			const self = this;
+			this.trtc.on('onEnterRoom', (result) => {
+				if (result > 0) {
+					self.phase = self.phase === 'ringing' ? 'ringing' : 'calling';
+					if (self.isVideo) {
+						self.trtc.startLocalPreview(true, self.LOCAL_VIEW_ID);
+						self.localViewVisible = true;
+					}
+					self.trtc.startLocalAudio();
+					if (self.speaker) self.trtc.setAudioRoute(TRTCAudioRoute.TRTCAudioRouteSpeaker);
+				} else {
+					uni.showToast({ title: '进房失败(' + result + ')', icon: 'none' });
+					self.finish(true);
+				}
+			});
+			this.trtc.on('onRemoteUserEnterRoom', (userId) => {
+				self.remoteUserId = userId;
+				self.markConnected();
+			});
+			this.trtc.on('onUserVideoAvailable', (userId, available) => {
+				self.remoteUserId = userId;
+				if (available) {
+					self.trtc.startRemoteView(userId, TRTCVideoStreamType.TRTCVideoStreamTypeBig, self.REMOTE_VIEW_ID);
+					self.remoteViewVisible = true;
+					self.markConnected();
+				} else {
+					self.remoteViewVisible = false;
+				}
+			});
+			this.trtc.on('onRemoteUserLeaveRoom', () => {
+				self.remoteViewVisible = false;
+				self.finish(true);
+			});
+			this.trtc.on('onExitRoom', () => {
+				self.trtc = null;
+			});
+			this.trtc.on('onError', (code, message) => {
+				uni.showToast({ title: '通话错误 ' + code + (message ? '：' + message : ''), icon: 'none' });
+			});
+		},
+
+		markConnected() {
+			if (this.connected) return;
+			this.connected = true;
+			this.phase = 'connected';
+			this.startAt = Date.now();
+			this.startTimer();
+			msmCall.patchActive({ phase: 'connected' });
+		},
+
+		startTimer() {
+			this.stopTimer();
+			this.elapsed = 0;
+			this.timer = setInterval(() => {
+				this.elapsed = Math.floor((Date.now() - this.startAt) / 1000);
+			}, 1000);
+		},
+
+		stopTimer() {
+			if (this.timer) {
+				clearInterval(this.timer);
+				this.timer = null;
+			}
+		},
+
+		leaveRoom() {
+			if (!this.trtc) return;
+			try {
+				if (this.isVideo) this.trtc.stopLocalPreview();
+				this.trtc.stopLocalAudio();
+				this.trtc.exitRoom();
+			} catch (e) {}
+			try {
+				TrtcCloud.destroyInstance();
+			} catch (e) {}
+			this.trtc = null;
+		},
+
+		/* ---------------- 被叫 ---------------- */
+
+		accept() {
+			this.phase = 'calling';
+			msmCall.patchActive({ phase: 'calling' });
+			msmCall
+				.sendSignal({
+					toUserId: this.peerId,
+					media: this.media,
+					terminal: false,
+					signal: { s: 'accept', roomId: this.roomId }
+				})
+				.catch(() => {});
+			this.enterRoom();
+		},
+
+		reject() {
+			msmCall
+				.sendSignal({
+					toUserId: this.peerId,
+					media: this.media,
+					terminal: true,
+					signal: { s: 'reject', roomId: this.roomId }
+				})
+				.catch(() => {});
+			this.finish(false);
+		},
+
+		/* ---------------- 通话控制 ---------------- */
+
+		toggleMute() {
+			this.muted = !this.muted;
+			if (this.trtc) this.trtc.muteLocalAudio(this.muted);
+		},
+
+		toggleCamera() {
+			this.cameraOff = !this.cameraOff;
+			if (this.trtc) this.trtc.muteLocalVideo(TRTCVideoStreamType.TRTCVideoStreamTypeBig, this.cameraOff);
+		},
+
+		switchCamera() {
+			this.frontCamera = !this.frontCamera;
+			if (this.trtc) this.trtc.switchCamera(this.frontCamera);
+		},
+
+		toggleSpeaker() {
+			this.speaker = !this.speaker;
+			if (this.trtc) {
+				this.trtc.setAudioRoute(this.speaker ? TRTCAudioRoute.TRTCAudioRouteSpeaker : TRTCAudioRoute.TRTCAudioRouteEarpiece);
+			}
+		},
+
+		/* ---------------- 对端信令 ---------------- */
+
+		onPeerSignal(payload) {
+			const sig = payload && payload.signal ? payload.signal : payload;
+			if (!sig || !sig.s) return;
+			if (sig.s === 'hangup' || sig.s === 'reject' || sig.s === 'cancel') {
+				const tip = sig.s === 'reject' ? '对方已拒接' : sig.s === 'cancel' ? '对方已取消' : '对方已挂断';
+				uni.showToast({ title: tip, icon: 'none' });
+				this.finish(false);
+				return;
+			}
+			if (sig.s === 'busy') {
+				uni.showToast({ title: '对方正在通话中', icon: 'none' });
+				this.finish(false);
+				return;
+			}
+			// accept 不用特别处理：真正的连接以 onRemoteUserEnterRoom / onUserVideoAvailable 为准
+		},
+
+		/* ---------------- 结束 ---------------- */
+
+		hangup() {
+			if (this.connected) {
+				// 已接通：走普通的「发出通话记录消息」，这样双方聊天里都会留下
+				// 「语音通话 时长03:12」这条记录；对端通话页靠 onRemoteUserLeaveRoom 收尾。
+				try {
+					this.$fc.pushOutMsg({
+						msgContent: this.durationText,
+						msgType: this.media === 'voice' ? 'TRTC_VOICE_END' : 'TRTC_VIDEO_END',
+						windowType: 'SINGLE',
+						userId: this.peerId
+					});
+				} catch (e) {
+					// $fc 不可用时退回发信令，保证对方一定能收到挂断
+					msmCall
+						.sendSignal({
+							toUserId: this.peerId,
+							media: this.media,
+							terminal: true,
+							signal: { s: 'hangup', roomId: this.roomId, dur: this.durationText }
+						})
+						.catch(() => {});
+				}
+			} else {
+				// 还没接通就挂了：对方可能还在响铃、也可能压根没进过房，
+				// 必须靠信令通知，否则会一直响下去
+				msmCall
+					.sendSignal({
+						toUserId: this.peerId,
+						media: this.media,
+						terminal: true,
+						signal: { s: 'cancel', roomId: this.roomId }
+					})
+					.catch(() => {});
+			}
+			this.finish(false);
+		},
+
+		/** 结束通话：sender 为 true 表示是异常/对方挂断，不再发信令 */
+		finish(alreadySignalled) {
+			if (this.phase === 'ended') return;
+			this.phase = 'ended';
+			this.stopTimer();
+			this.leaveRoom();
+			msmCall.clearActive();
+			setTimeout(() => {
+				uni.navigateBack({
+					delta: 1,
+					fail: () => {
+						uni.reLaunch({ url: '/wx/tabbar1/index' });
+					}
+				});
+			}, alreadySignalled ? 600 : 300);
+		}
+	}
+};
+</script>
+
+<style>
+/* nvue：只支持 flex 布局与基础样式，写不出花哨效果正好符合 Msm 的克制风格 */
+.page {
+	flex: 1;
+	background-color: #111b21;
+}
+
+/* ---------- 视频 ---------- */
+.stage {
+	flex: 1;
+	position: relative;
+	background-color: #111b21;
+}
+.remote-view {
+	flex: 1;
+	width: 750rpx;
+	height: 1000rpx;
+}
+.stage-fallback {
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+}
+.local-view {
+	position: absolute;
+	top: 80rpx;
+	right: 32rpx;
+	width: 220rpx;
+	height: 320rpx;
+	border-radius: 12rpx;
+	background-color: #000000;
+}
+
+/* ---------- 语音 ---------- */
+.audio-stage {
+	flex: 1;
+	justify-content: center;
+	align-items: center;
+	background-color: #111b21;
+}
+
+.avatar-xl {
+	width: 240rpx;
+	height: 240rpx;
+	border-radius: 120rpx;
+	background-color: #263238;
+}
+
+.stage-name {
+	margin-top: 40rpx;
+	font-size: 40rpx;
+	color: #ffffff;
+}
+.stage-tip {
+	margin-top: 16rpx;
+	font-size: 28rpx;
+	color: #8696a0;
+}
+
+.timer-bar {
+	align-items: center;
+	padding-bottom: 16rpx;
+}
+.timer {
+	font-size: 32rpx;
+	color: #e3f0fc;
+}
+
+/* ---------- 底部操作栏 ---------- */
+.bar {
+	flex-direction: row;
+	justify-content: space-around;
+	align-items: center;
+	padding-top: 24rpx;
+	padding-bottom: 64rpx;
+	background-color: #111b21;
+}
+.act {
+	align-items: center;
+	justify-content: center;
+	width: 160rpx;
+}
+.act-btn {
+	width: 116rpx;
+	height: 116rpx;
+	border-radius: 58rpx;
+	background-color: #2a3942;
+	justify-content: center;
+	align-items: center;
+}
+.act-btn--on {
+	background-color: #2f8fe5;
+}
+.act-btn--accept {
+	background-color: #2f8fe5;
+}
+.act-btn--hangup {
+	background-color: #d32f2f;
+}
+.act-icon {
+	font-size: 44rpx;
+	color: #ffffff;
+}
+.act-label {
+	margin-top: 12rpx;
+	font-size: 24rpx;
+	color: #8696a0;
+}
+</style>

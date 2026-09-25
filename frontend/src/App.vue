@@ -8,7 +8,6 @@
 	import consoleImgs from '@/common/consoleImgs.js'
 	// #ifdef APP-PLUS
 	import appUpgrade from '@/common/appUpgrade.js';
-	const TUICalling = uni.requireNativePlugin("TUICallingUniPlugin-TUICallingModule");
 	// #endif
 	export default {
 		onLaunch: function() {
@@ -47,43 +46,9 @@
 				// #endif
 				this.$store.dispatch('get_UserInfo').then(res=>{
 					// #ifdef APP-PLUS
-					var nickName=res.nickName
-					var portrait=res.portrait
-					this.$http.request({
-						url: '/trtc/getSign',
-						success: (res) => {
-							var sdkAppID=res.data.data.appId
-							var userID=res.data.data.userId
-							var userSig=res.data.data.sign
-							TUICalling.login({//登录音视频
-							    sdkAppID: sdkAppID, 
-							    userID: userID,
-							    userSig: userSig
-							},(res) => {
-							    console.log('音视频登录成功')
-								TUICalling.setUserNickname({
-								    nickName: nickName
-								})
-								TUICalling.setUserAvatar({
-								    avatar: portrait
-								})
-								plus.io.requestFileSystem(plus.io.PRIVATE_WWW, function(fs) {
-								    fs.root.getFile('/static/longcall.mp3', {
-								        create: false
-								    }, function(fileEntry) {
-								        fileEntry.file(function(file) {
-											TUICalling.setCallingBell({
-											    ringtone: file.fullPath
-											},(res) => {
-												console.log(JSON.stringify(res))
-											})
-										});
-								    });
-								});
-								
-							})
-						}
-					});
+					// 音视频：改用官方 TRTCCloud 原生插件（见 common/msm-call.js）。
+					// TRTCCloud 没有「登录」这一步 —— App 启动时不再预热，
+					// 通话页在真正进房前才调 /trtc/getSign 取签名，避免签名过期。
 					// 未集成 Push 模块时访问 plus.push 会弹出"未添加push模块"提示框，
 					// 故此处跳过。日后开通 uni-push 并勾选 Push 模块后，可恢复为
 					// var nowCid = plus.push.getClientInfo().clientid
@@ -135,41 +100,11 @@
 		},
 		onShow: function() {
 			console.log('App Show')
-			uni.getStorage({
-				key: 'call',
-				success: (res) => {
-					var callx=res.data
-					if(callx){
-						var call=JSON.parse(callx)
-						function getInervalHour(startDate) {//获取两个时间之间的小时
-							if (!startDate) {
-								return '0秒'
-							}
-							var ms = new Date().getTime() - startDate;
-							if (ms < 0) return '0秒';
-							if((ms/1000)<60){
-								return Math.floor(ms / 1000)+'秒';
-							}else{
-								return Math.floor(ms / 1000 /60)+'分';
-							}
-						}
-						var msgType=''
-						if(call.type=='audio'){
-							msgType='TRTC_VOICE_END'
-						}
-						if(call.type=='video'){
-							msgType='TRTC_VIDEO_END'
-						}
-						this.$fc.pushOutMsg({
-							msgContent:getInervalHour(call.startTime),
-							msgType:msgType,
-							windowType:'SINGLE',
-							userId:call.userId,
-						})
-						uni.removeStorageSync('call')
-					}
-				}
-			});
+			// 以前这里会读本地存储里的 key 'call'，把 TUICalling 结束后留下的
+			// { userId, trtcId, startTime, type } 拼成一条 TRTC_*_END 记录推到聊天里。
+			// 换成自写通话页后，通话记录改由通话页在挂断时直接 pushOutMsg 生成
+			// （见 pages/call/index.nvue 的 hangup），没有任何地方再写 key 'call'，
+			// 所以这段死代码删掉，避免日后误以为通话记录是这里产生的。
 		},
 		onHide: function() {
 			console.log('App Hide')
@@ -223,6 +158,11 @@
 		/* 更浅的分割线：用于表单输入行下划线（比列表分割线再轻一档） */
 		--msm-divider-light: #EAEAEA;
 
+		/* 消息气泡：极简纯色，无背景图无阴影。
+		   自己 = 品牌淡蓝（蓝只做点缀，文字仍用墨黑，不靠反白撑对比） */
+		--msm-bubble-other: #FFFFFF;
+		--msm-bubble-self: #E3F0FC;
+
 		/* 语义色：只用于状态，不作装饰 */
 		--msm-success: #388E3C;
 		--msm-danger: #D32F2F;
@@ -260,89 +200,90 @@
 	}
 
 	/* ============================================================
-	   1. 自定义导航栏（navigationStyle: custom 时使用）
+	   1.5 统一顶栏 —— 三栏：左 Logo ｜ 中搜索胶囊 ｜ 右头像
+	   ------------------------------------------------------------
+	   参考 V2EX 首页头部。左右各留 16px 边距，两端「像门神一样」稳住顶部；
+	   Logo 高 28px、头像 36px 正圆 —— 头像刻意不比 Logo 显眼。
+	   设置页不放搜索，用 .msm-topbar__spacer 撑开保持左右对齐。
 	   ============================================================ */
-	.msm-header {
-		position: sticky;
-		top: 0;
-		z-index: 90;
+	.msm-topbar {
+		display: flex;
+		align-items: center;
+		padding: calc(var(--status-bar-height, 0px) + 8px) 16px 8px;
 		background: var(--msm-surface);
-		padding: calc(var(--status-bar-height, 0px) + 8px) var(--msm-page-pad) 0;
 		border-bottom: 1px solid var(--msm-divider);
 	}
 
-	/* 内部已有自带分割线的元素（如 .msm-tabs）时，去掉头部自己的边框 */
-	.msm-header--flat {
-		border-bottom: 0;
+	/* 左：Logo（小） */
+	.msm-topbar__logo {
+		width: 78px;    /* 28px 高 × 原图 2.8:1 比例 */
+		height: 28px;
+		flex-shrink: 0;
 	}
 
-	.msm-header__bar {
-		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		min-height: 42px;
-	}
-
-	.msm-header__left {
-		padding-bottom: 8px;
-	}
-
-	.msm-header__brand {
-		font-size: 24px;
-		font-weight: 700;
-		letter-spacing: -.4px;
-		line-height: 1;
-		color: var(--msm-text);
-	}
-
-	/* 字标：M 用墨黑，sm 用品牌蓝（与 Logo 一致） */
-	.msm-header__brand em {
-		font-style: normal;
-		color: var(--msm-primary);
-	}
-
-	/* 页面标题（通讯录 / 发现 / 我 这类非品牌页用） */
-	.msm-header__title {
-		font-size: 20px;
-		font-weight: 700;
-		letter-spacing: -.3px;
-		line-height: 1;
-		color: var(--msm-text);
-	}
-
-	.msm-header__sub {
-		margin-top: 5px;
-		font-size: 12px;
-		color: var(--msm-text-muted);
-		line-height: 1;
-	}
-
-	.msm-header__actions {
+	/* 中：搜索胶囊 —— 撑满剩余空间，浅灰底、全圆角 */
+	.msm-topbar__search {
+		flex: 1;
+		min-width: 0;
 		display: flex;
 		align-items: center;
-		padding-bottom: 6px;
+		height: 34px;
+		margin: 0 12px;
+		padding: 0 12px;
+		background: var(--msm-background);
+		border-radius: var(--msm-radius-pill);
 	}
 
-	.msm-icon-btn {
-		width: 34px;
-		height: 34px;
-		margin-left: 2px;
-		border-radius: var(--msm-radius-md);
+	.msm-topbar__search-icon {
+		margin-right: 6px;
+		flex-shrink: 0;
+	}
+
+	.msm-topbar__input {
+		flex: 1;
+		min-width: 0;
+		font-size: 14px;
+		color: var(--msm-text);
+		background: transparent;
+	}
+
+	.msm-topbar__ph {
+		color: var(--msm-text-muted);
+		font-size: 14px;
+	}
+
+	.msm-topbar__clear {
+		padding-left: 6px;
+		flex-shrink: 0;
+	}
+
+	/* 中：不需要搜索时（设置页）用它撑开，保证左 Logo / 右头像仍分列两端 */
+	.msm-topbar__spacer {
+		flex: 1;
+		min-width: 0;
+	}
+
+	/* 中：顶栏里的次要图标按钮（如「发起聊天」的 +） */
+	.msm-topbar__icon {
+		width: 32px;
+		height: 32px;
+		margin-right: 8px;
+		flex-shrink: 0;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		border-radius: var(--msm-radius-md);
 		color: var(--msm-text-secondary);
 	}
 
-	.msm-icon-btn:active {
+	.msm-topbar__icon:active {
 		background: var(--msm-surface-sunken);
 	}
 
-	/* 导航栏右上角的用户头像（圆形，参考 V2EX 首页头部） */
-	.msm-avatar-btn {
-		width: 32px;
-		height: 32px;
-		margin-left: 10px;
+	/* 右：圆形用户头像（36px，比 Logo 略小一号的视觉重量） */
+	.msm-topbar__avatar {
+		width: 36px;
+		height: 36px;
 		border-radius: 50%;
 		overflow: hidden;
 		flex-shrink: 0;
@@ -352,41 +293,14 @@
 		justify-content: center;
 	}
 
-	.msm-avatar-btn:active {
+	.msm-topbar__avatar:active {
 		opacity: .65;
 	}
 
-	.msm-avatar-btn__img {
+	.msm-topbar__avatar-img {
 		width: 100%;
 		height: 100%;
 		display: block;
-	}
-
-	/* ============================================================
-	   2. 搜索框：纯白 + 1px 细边框（不再是灰色块）
-	   ============================================================ */
-	.msm-search {
-		display: flex;
-		align-items: center;
-		height: 36px;
-		margin: 10px 0 12px;
-		padding: 0 10px;
-		background: var(--msm-surface);
-		border: 1px solid var(--msm-divider);
-		border-radius: var(--msm-radius-lg);
-		color: var(--msm-text-muted);
-		font-size: 14px;
-	}
-
-	/* 整个搜索框获得焦点时边框变蓝 */
-	.msm-search:focus-within {
-		border-color: var(--msm-primary);
-	}
-
-	.msm-search__icon {
-		margin-right: 6px;
-		flex-shrink: 0;
-		color: var(--msm-text-muted);
 	}
 
 	/* ============================================================
@@ -407,10 +321,6 @@
 	/* 不需要自带分割线时（外层已有边框） */
 	.msm-tabs--plain {
 		border-bottom: 0;
-	}
-
-	.msm-tabs--inCard {
-		padding: 0 20px;
 	}
 
 	.msm-tabs__item {

@@ -6,7 +6,7 @@
 					<view class="openTool-wx-list-item-icon"><view class="wxfont wxcopy"></view></view>
 					<view class="text">复制</view>
 				</view>
-				<view class="openTool-wx-list-item" @click="shoucang" v-if="data.msgType !== 'TRTC_VOICE_END'&&data.msgType !== 'TRTC_VIDEO_END'">
+				<view class="openTool-wx-list-item" @click="shoucang" v-if="!isCallMsg">
 					<view class="openTool-wx-list-item-icon"><view class="wxfont shoucang"></view></view>
 					<view class="text">收藏</view>
 				</view>
@@ -50,6 +50,15 @@ export default {
 		
 	},
 	computed: {
+		/**
+		 * 通话记录类消息（START / END 四种）不适合收藏：
+		 * 它们的内容是信令或时长，收藏下来没有意义。
+		 */
+		isCallMsg() {
+			const t = this.data && this.data.msgType;
+			return t === 'TRTC_VOICE_START' || t === 'TRTC_VIDEO_START' ||
+				t === 'TRTC_VOICE_END' || t === 'TRTC_VIDEO_END';
+		}
 	},
 	mounted() {
 		var animation = uni.createAnimation({

@@ -32,6 +32,21 @@
 			"navigationStyle": "custom"
 		}
 	}, {
+		"path": "pages/call/index",
+		"name": "msmcall",
+		"aliasPath": "/msmcall",
+		"requireAuth": true,
+		"style": {
+			"navigationBarTitleText": "通话",
+			"navigationStyle": "custom",
+			"app-plus": {
+				"titleNView": false,
+				"background": "#111B21",
+				"animationType": "fade-in",
+				"animationDuration": 150
+			}
+		}
+	}, {
 		"path": "pages/agreement/index",
 		"name": "agreement",
 		"aliasPath": "/agreement",
@@ -51,7 +66,7 @@
 			"background": "#efeff4"
 		}
 	},
-	"tabBar": { //底部
+	"tabBar": { //底部三栏：消息 / 通讯录 / 设置
 		"color": "#8696A0",
 		"selectedColor": "#2F8FE5",
 		"borderStyle": "black",
@@ -69,16 +84,10 @@
 				"text": "通讯录"
 			},
 			{
-				"pagePath": "wx/tabbar3/index",
-				"iconPath": "static/msm/tab/discover.png",
-				"selectedIconPath": "static/msm/tab/discover-on.png",
-				"text": "发现"
-			},
-			{
 				"pagePath": "wx/tabbar4/index",
-				"iconPath": "static/msm/tab/me.png",
-				"selectedIconPath": "static/msm/tab/me-on.png",
-				"text": "我"
+				"iconPath": "static/msm/tab/settings.png",
+				"selectedIconPath": "static/msm/tab/settings-on.png",
+				"text": "设置"
 			}
 		]
 	},
@@ -149,21 +158,12 @@
 						"navigationStyle": "custom"
 					}
 				}, {
-					"path": "tabbar3/index",
-					"name": "wxtabbar3",
-					"aliasPath": "/wxtabbar3",
-					"requireAuth": true,
-					"style": {
-						"navigationBarTitleText": "发现",
-						"navigationStyle": "custom"
-					}
-				}, {
 					"path": "tabbar4/index",
 					"name": "wxtabbar4",
 					"aliasPath": "/wxtabbar4",
 					"requireAuth": true,
 					"style": {
-						"navigationBarTitleText": "我",
+						"navigationBarTitleText": "设置",
 						"navigationStyle": "custom"
 					}
 				}, {

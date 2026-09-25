@@ -36,7 +36,13 @@ $msm-background:     #F5F5F5;   // 页面底（用来衬托纯白卡片）
 $msm-surface:        #FFFFFF;   // 卡片 / 列表 / 搜索框 / 输入框
 $msm-surface-sunken: #F5F5F5;   // 按下态
 $msm-divider:        #E0E0E0;   // 1px 极细分割线
-$msm-divider-light:  #EAEAEA;   // 更浅一档：表单输入行下划线
+$msm-divider-light:  #EAEAEA;   // 更浅一档：表单输入行下划线、日期分隔线
+
+/* ---------- 消息气泡 ----------
+   极简纯色：不用背景图、不用阴影，靠底色区分说话人。
+   自己 = 品牌淡蓝（蓝只做点缀，文字仍是墨黑，不靠反白撑对比） */
+$msm-bubble-other:   #FFFFFF;   // 对方：纯白
+$msm-bubble-self:    #E3F0FC;   // 自己：品牌淡蓝
 
 /* ---------- 语义色：只用于状态 ---------- */
 $msm-success:        #388E3C;   // 成功 / 已发送

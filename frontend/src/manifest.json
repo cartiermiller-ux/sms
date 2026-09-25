@@ -2,8 +2,8 @@
     "name" : "Msm",
     "appid" : "__UNI__510B38E",
     "description" : "Msm",
-    "versionName" : "1.4.1",
-    "versionCode" : 141,
+    "versionName" : "1.5.0",
+    "versionCode" : 150,
     "developer" : {
         "name" : "zmm2113@qq.com",
         "email" : "zmm2113@qq.com"
@@ -34,6 +34,26 @@
             "VideoPlayer" : {},
             "iBeacon" : {}
         },
+        "nativePlugins" : {
+            /* 腾讯云 TRTC 原生音视频插件（源码在 nativeplugins/TRTCCloudUniPlugin-TRTCCloudImpl）
+               视频画面必须由 nvue 页面中的原生组件承载，见 pages/call/index.nvue
+               __plugin_info__ 是 HBuilderX 选中插件后写入的元信息，云打包按它来挑插件；
+               bought:-1 表示免费插件，platforms 要与 nativeplugins 里实际有的平台一致 */
+            "TRTCCloudUniPlugin-TRTCCloudImpl" : {
+                "__plugin_info__" : {
+                    "name" : "TRTCCloudUniPlugin-TRTCCloudImpl",
+                    "description" : "腾讯云实时音视频 TRTC 原生插件",
+                    "platforms" : "Android,iOS",
+                    "url" : "",
+                    "android_package_name" : "",
+                    "ios_bundle_id" : "",
+                    "isCloud" : false,
+                    "bought" : -1,
+                    "pid" : "",
+                    "parameters" : {}
+                }
+            }
+        },
         /* 模块配置 */
         "distribute" : {
             /* 应用发布信息 */
@@ -49,13 +69,16 @@
                     "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\"/>",
                     "<uses-permission android:name=\"android.permission.BLUETOOTH\"/>",
                     "<uses-permission android:name=\"android.permission.BLUETOOTH_ADMIN\"/>",
+                    "<uses-permission android:name=\"android.permission.CAMERA\"/>",
                     "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
                     "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\"/>",
                     "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\"/>",
                     "<uses-permission android:name=\"android.permission.INTERNET\"/>",
+                    "<uses-permission android:name=\"android.permission.MODIFY_AUDIO_SETTINGS\"/>",
                     "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
                     "<uses-permission android:name=\"android.permission.READ_LOGS\"/>",
                     "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.RECORD_AUDIO\"/>",
                     "<uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\"/>",
                     "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
                     "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
@@ -64,7 +87,14 @@
                 ]
             },
             "ios" : {
-                "dSYMs" : false
+                "dSYMs" : false,
+                /* 腾讯云 TRTC 插件声明了这几项隐私用途，云端打包会要求填写文案 */
+                "privacyDescription" : {
+                    "NSCameraUsageDescription" : "Msm 需要使用摄像头进行视频通话",
+                    "NSMicrophoneUsageDescription" : "Msm 需要使用麦克风进行语音与视频通话",
+                    "NSPhotoLibraryUsageDescription" : "Msm 需要访问相册以发送图片",
+                    "NSPhotoLibraryAddUsageDescription" : "Msm 需要保存图片到相册"
+                }
             },
             /* ios打包配置 */
             "sdkConfigs" : {

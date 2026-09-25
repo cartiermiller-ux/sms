@@ -66,17 +66,14 @@ $tb.height        = '56px'
 $tb.iconWidth     = '24px'
 $tb.fontSize      = '10px'
 
-$newIcons = @(
-    @{ p = 'wx/tabbar1/index'; i = '/static/msm/tab/chat.png';     s = '/static/msm/tab/chat-on.png' },
-    @{ p = 'wx/tabbar2/index'; i = '/static/msm/tab/contacts.png'; s = '/static/msm/tab/contacts-on.png' },
-    @{ p = 'wx/tabbar3/index'; i = '/static/msm/tab/discover.png'; s = '/static/msm/tab/discover-on.png' },
-    @{ p = 'wx/tabbar4/index'; i = '/static/msm/tab/me.png';       s = '/static/msm/tab/me-on.png' }
+# 底部改成了三栏（消息 / 通讯录 / 设置），所以 tabBar 列表**整体重建**，
+# 不能像以前那样「读旧模板再换图标」—— 旧模板是 4 栏，会多出一个「发现」。
+# 注意：pagePath 必须与 pages.json 的 tabBar 一致，否则原生 tabBar 会缺项。
+$tb.list = @(
+    @{ pagePath = 'wx/tabbar1/index'; iconPath = '/static/msm/tab/chat.png';     selectedIconPath = '/static/msm/tab/chat-on.png';     text = '消息' },
+    @{ pagePath = 'wx/tabbar2/index'; iconPath = '/static/msm/tab/contacts.png'; selectedIconPath = '/static/msm/tab/contacts-on.png'; text = '通讯录' },
+    @{ pagePath = 'wx/tabbar4/index'; iconPath = '/static/msm/tab/settings.png'; selectedIconPath = '/static/msm/tab/settings-on.png'; text = '设置' }
 )
-for ($k = 0; $k -lt $tb.list.Count; $k++) {
-    $item = $tb.list[$k]
-    $match = $newIcons | Where-Object { $_.p -eq $item.pagePath }
-    if ($match) { $item.iconPath = $match.i; $item.selectedIconPath = $match.s }
-}
 
 # 统一使用深色状态栏文字（页面都是浅色）
 $m.'plus'.statusbar.background = '#FFFFFF'

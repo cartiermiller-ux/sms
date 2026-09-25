@@ -1,19 +1,11 @@
 <template>
 	<view class="splash">
 		<view class="splash__body">
-			<!-- ============ 品牌区 ============ -->
+			<!-- ============ 品牌区（居中）============ -->
 			<view class="splash__brand">
 				<image class="splash__logo" src="../../static/msm/logo.png" mode="aspectFit"></image>
 				<text class="splash__slogan">Connect freely.</text>
 				<text class="splash__slogan-cn">和重要的人保持联系</text>
-
-				<!-- 产品卖点：填补 Logo 与按钮之间的大片空白 -->
-				<view class="splash__features">
-					<view class="splash__feature" v-for="(f, i) in features" :key="i">
-						<view class="splash__feature-dot"></view>
-						<text class="splash__feature-text">{{ f }}</text>
-					</view>
-				</view>
 			</view>
 
 			<!-- ============ 底部：唯一入口 + 合规链接 ============ -->
@@ -32,12 +24,6 @@
 
 <script>
 export default {
-	data() {
-		return {
-			// 只列真实已实现的能力，不写「端到端加密」这类本产品没有的卖点
-			features: ['消息与群聊，实时送达', '语音、视频通话', '朋友圈与附近的人', '扫一扫，加好友']
-		};
-	},
 	methods: {
 		// 「开始使用」是唯一入口：登录页同时提供「登录」与「注册」两条路径
 		goLogin() {
@@ -69,12 +55,12 @@ export default {
 
 <style lang="scss" scoped>
 	/* ============================================================
-	   启动页 —— 纯白底 + Logo + 卖点 + 单一入口
+	   启动页 —— 纯白底 + Logo + 标语 + 单一入口
 	   2026-09-25 调整：
-	     · Logo 由 210px 缩到 168px，腾出空间给卖点文案（原来上方大片留白）
-	     · 「登录」改为唯一入口「开始使用」
-	     · 按钮降级为幽灵按钮（白底 + 深色描边）——
-	       真正的蓝色主按钮在登录页，这里只负责「进入」
+	     · Logo 由 210px 缩到 168px
+	     · 「登录」改为唯一入口「开始使用」，降级为幽灵按钮
+	       （真正的蓝色主按钮在登录页，这里只负责「进入」）
+	     · 曾加过 4 条产品卖点，后按需求移除，改为纯居中构图
 	   ============================================================ */
 	.splash {
 		position: relative;
@@ -120,32 +106,6 @@ export default {
 		font-size: 15px;
 		letter-spacing: 2px;
 		color: var(--msm-text);
-	}
-
-	/* ---------- 产品卖点 ---------- */
-	.splash__features {
-		margin-top: 40px;
-	}
-
-	.splash__feature {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-bottom: 15px;
-	}
-
-	.splash__feature-dot {
-		width: 4px;
-		height: 4px;
-		border-radius: 50%;
-		background: var(--msm-primary);
-		margin-right: 8px;
-		flex-shrink: 0;
-	}
-
-	.splash__feature-text {
-		font-size: 14px;
-		color: var(--msm-text-secondary);
 	}
 
 	/* ---------- 底部操作区 ---------- */

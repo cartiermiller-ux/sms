@@ -7,7 +7,7 @@
 			<scroll-view scroll-y :style="'height:' + windowHeight + 'px'"><favorites type="2" @clickitem="clickitem"></favorites></scroll-view>
 		</uni-popup>
 		<view class="zfb-tk-main">
-			<uni-list class="zfb-tk-conent" :border="false" style="background: none;"><chatItem v-for="(v, index) in chatWindowData" :key="'key' + index" :talkTo="talkTo" :itemKey="index" :item="v" @tryagin="tryagin" @longpressItem="longpressItem" :longTapItemKey="longTapItemKey"></chatItem></uni-list>
+			<uni-list class="zfb-tk-conent" :border="false" style="background: none;"><chatItem v-for="(v, index) in chatWindowData" :key="'key' + index" :talkTo="talkTo" :itemKey="index" :item="v" :dateLabel="dateLabels[index] || ''" @tryagin="tryagin" @longpressItem="longpressItem" :longTapItemKey="longTapItemKey"></chatItem></uni-list>
 			<view class="autodownView"></view>
 		</view>
 		<view :style="'height: ' + keyboardHeight + 'px'"></view>
@@ -41,13 +41,12 @@
 </template>
 
 <script>
-// #ifdef APP-PLUS
-const TUICalling = uni.requireNativePlugin('TUICallingUniPlugin-TUICallingModule');
-// #endif
 let observer = null;
 import favorites from '../favorites/index.vue';
 import chatItem from './chat-item.vue';
 import sendCard from './sendCard.vue';
+import { dayKey, formatDayDivider } from '@/common/msm-format.js';
+import msmCall from '@/common/msm-call.js';
 export default {
 	components: {
 		chatItem,
@@ -120,6 +119,27 @@ export default {
 			if (this.$store.state.chatDatalist[this.talkTo.userId]) {
 				return this.$store.state.chatDatalist[this.talkTo.userId].list;
 			}
+		},
+		/**
+		 * 日期分隔线：只在「跨天」的那一条消息上给出文案，其余为空。
+		 * 返回形如 { 0: '昨天', 6: '今天' }，配合 chat-item 的 dateLabel 使用。
+		 * 直接读 store（不走 chatWindowData），避免 computed 里重复触发 dispatch。
+		 */
+		dateLabels() {
+			const all = this.$store.state.chatDatalist;
+			const obj = all && all[this.talkTo.userId];
+			const list = (obj && obj.list) || [];
+			const out = {};
+			let lastKey = '';
+			for (let i = 0; i < list.length; i++) {
+				const key = dayKey(list[i].time);
+				if (!key) continue;
+				if (key !== lastKey) {
+					out[i] = formatDayDivider(list[i].time);
+					lastKey = key;
+				}
+			}
+			return out;
 		}
 	},
 	watch: {
@@ -313,95 +333,24 @@ export default {
 			});
 		},
 		sendVoiceCall() {
-			//发起语音
-			uni.showLoading({
-				title: '发起语音通话'
-			});
-			var formdata = {
+			// 发起语音通话：信令与跳转都由 msmCall 统一处理
+			const info = this.localData || {};
+			const peer = (this.talkTo.windowType === 'GROUP' ? info.groupInfo : info.fromInfo) || {};
+			msmCall.startCall({
 				userId: this.talkTo.userId,
-				msgType: 'TRTC_VOICE_START',
-				content: 'TRTC_VOICE_START'
-			};
-			this.$http.request({
-				url: '/chat/sendMsg',
-				method: 'POST',
-				data: JSON.stringify(formdata),
-				success: res => {
-					if (res.data.code == '200') {
-						if (res.data.data.status !== '0') {
-							uni.showToast({
-								title: res.data.data.statusLabel,
-								icon: 'none'
-							});
-							return;
-						}
-						var userInfo = res.data.data.userInfo;
-						var data = {
-							userId: userInfo.userId,
-							trtcId: userInfo.trtcId,
-							nickName: userInfo.nickName,
-							portrait: userInfo.portrait,
-							startTime: new Date().getTime(),
-							type: 'audio'
-						};
-						uni.setStorage({
-							key: 'call',
-							data: JSON.stringify(data),
-							success: function() {
-								TUICalling.call({
-									userID: userInfo.trtcId,
-									type: 1
-								});
-							}
-						});
-					}
-				}
+				nickName: peer.nickName || '',
+				portrait: peer.portrait || '',
+				media: 'voice'
 			});
 		},
 		sendVideoCall() {
-			//发起视频
-			uni.showLoading({
-				title: '发起视频通话'
-			});
-			var formdata = {
+			const info = this.localData || {};
+			const peer = (this.talkTo.windowType === 'GROUP' ? info.groupInfo : info.fromInfo) || {};
+			msmCall.startCall({
 				userId: this.talkTo.userId,
-				msgType: 'TRTC_VIDEO_START',
-				content: 'TRTC_VIDEO_START'
-			};
-			this.$http.request({
-				url: '/chat/sendMsg',
-				method: 'POST',
-				data: JSON.stringify(formdata),
-				success: res => {
-					if (res.data.code == '200') {
-						if (res.data.data.status !== '0') {
-							uni.showToast({
-								title: res.data.data.statusLabel,
-								icon: 'none'
-							});
-							return;
-						}
-						var userInfo = res.data.data.userInfo;
-						var data = {
-							userId: userInfo.userId,
-							trtcId: userInfo.trtcId,
-							nickName: userInfo.nickName,
-							portrait: userInfo.portrait,
-							startTime: new Date().getTime(),
-							type: 'video'
-						};
-						uni.setStorage({
-							key: 'call',
-							data: JSON.stringify(data),
-							success: function() {
-								TUICalling.call({
-									userID: userInfo.trtcId,
-									type: 2
-								});
-							}
-						});
-					}
-				}
+				nickName: peer.nickName || '',
+				portrait: peer.portrait || '',
+				media: 'video'
 			});
 		},
 		toolClick(e) {
@@ -716,7 +665,8 @@ export default {
 
 /* ---------- 消息区 ---------- */
 .zfb-tk-main {
-	padding: 8px 16px 0;
+	/* 左右各 12px 留白，垂直方向交给每条消息自己的 4px margin 控制 */
+	padding: 4px 12px 0;
 	padding-bottom: 62px;
 }
 

@@ -19,9 +19,10 @@
 			<view class="form-item">
 				<view class="form-item__label">手机号码</view>
 				<view class="form-item__field">
-					<text class="form-item__cc">+{{ countryCode }}</text>
+					<!-- 国家 / 地区区号：点击可选择，不再写死 -->
+					<msm-country :value="countryCode" @change="onCountryChange"></msm-country>
 					<view class="form-item__sep"></view>
-					<input class="form-item__input" maxlength="11" type="text" placeholder="请输入手机号码" placeholder-class="form-item__ph" name="phone" v-model="phone" />
+					<input class="form-item__input" :maxlength="phoneMax" type="text" placeholder="填写手机号码" placeholder-class="form-item__ph" name="phone" v-model="phone" />
 					<view class="form-item__suffix" v-if="phone.length > 0" @click="phone = ''">
 						<uni-icons type="clear" size="18" color="#8696A0"></uni-icons>
 					</view>
@@ -72,6 +73,7 @@
 </template>
 
 <script>
+	import { phoneMaxLen, isValidPhone } from '@/common/msm-country.js';
 	export default {
 		data() {
 			return {
@@ -87,8 +89,20 @@
 				agree: false,
 			}
 		},
+		computed: {
+			// 手机号输入框最大长度随所选地区变化（+86 为 11 位）
+			phoneMax() {
+				return phoneMaxLen(this.countryCode);
+			}
+		},
 		onLoad() {},
 		methods: {
+			// 选择国家 / 地区后只更新区号；号码由用户重新填写，避免误当成同一号码
+			onCountryChange(c) {
+				if (!c || c.code === this.countryCode) return;
+				this.countryCode = c.code;
+				this.phone = '';
+			},
 			goBack() {
 				const pages = getCurrentPages();
 				if (pages && pages.length > 1) {
@@ -124,8 +138,8 @@
 				});
 			},
 			getMsgCode() {
-				var reg = /^1[0-9]{10,10}$/;
-				if(!reg.test(this.phone)){
+				// 校验规则随所选国家 / 地区变化（+86 仍是 1 开头的 11 位）
+				if(!isValidPhone(this.countryCode, this.phone)){
 					uni.showToast({
 						title:'请输入正确的手机号',
 						icon:'none'
@@ -165,15 +179,21 @@
 				return Math.floor(Math.random() * (max - min + 1)) + min
 			},
 			sublogin(e) {
+				// +86 沿用项目自带的 phone 校验规则；
+				// 其他地区项目校验器不认，改为「非空 + 下方 isValidPhone 长度校验」
+				var phoneRules = [{
+					checkType: "required",
+					errorMsg: "请填写手机号码"
+				}];
+				if (this.countryCode === '86') {
+					phoneRules.push({
+						checkType: "phone",
+						errorMsg: "请填写正确的手机号码"
+					});
+				}
 				var rules = {
 					phone: {
-						rules: [{
-							checkType: "required",
-							errorMsg: "请填写手机号码"
-						}, {
-							checkType: "phone",
-							errorMsg: "请填写正确的手机号码"
-						}]
+						rules: phoneRules
 					},
 					password: {
 						rules: [{
@@ -199,6 +219,13 @@
 					if (!this.agree) {
 						uni.showToast({
 							title: '请先同意《隐私及服务协议》',
+							icon: 'none'
+						});
+						return;
+					}
+					if (!isValidPhone(this.countryCode, formData.phone)) {
+						uni.showToast({
+							title: '请输入正确的手机号',
 							icon: 'none'
 						});
 						return;

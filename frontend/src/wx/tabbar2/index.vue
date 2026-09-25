@@ -1,37 +1,13 @@
 <template>
 	<view class="msm-page">
-		<!-- ============ 导航栏 ============ -->
-		<view class="msm-header">
-			<view class="msm-header__bar">
-				<view class="msm-header__left">
-					<view class="msm-header__title">通讯录</view>
-					<view class="msm-header__sub">{{ totalCount }} 位联系人</view>
-				</view>
-				<view class="msm-header__actions">
-					<view class="msm-icon-btn" @click="focusSearch">
-						<uni-icons type="search" size="20" color="#667781"></uni-icons>
-					</view>
-					<view class="msm-icon-btn" @click="openMore">
-						<uni-icons type="personadd" size="20" color="#111B21"></uni-icons>
-					</view>
-				</view>
-			</view>
-
-			<view class="msm-search">
-				<uni-icons class="msm-search__icon" type="search" size="15" color="#8696A0"></uni-icons>
-				<input
-					class="msm-search__input"
-					v-model="keyword"
-					type="text"
-					placeholder="搜索联系人"
-					placeholder-class="msm-search__ph"
-					confirm-type="search"
-				/>
-				<view v-if="keyword" class="msm-search__clear" @click="keyword = ''">
-					<uni-icons type="clear" size="15" color="#8696A0"></uni-icons>
-				</view>
-			</view>
-		</view>
+		<!-- ============ 统一顶栏：Logo ｜ 搜索胶囊 ｜ 添加好友 ｜ 头像 ============ -->
+		<msm-topbar
+			:value="keyword"
+			:show-plus="true"
+			placeholder="搜索联系人"
+			@input="onSearchInput"
+			@plus="openMore"
+		></msm-topbar>
 
 		<!-- ============ 快速入口（V2EX 式菜单行，不再是三宫格彩色图标） ============ -->
 		<view v-if="!keyword" class="entry">
@@ -152,8 +128,9 @@ export default {
 		badgeText(n) {
 			return formatCount(n) || String(n);
 		},
-		focusSearch() {
-			this.keyword = '';
+		/** 顶栏搜索框是受控组件，输入值回写到本页 keyword 上 */
+		onSearchInput(v) {
+			this.keyword = v || '';
 		},
 		openMore() {
 			if (this.$refs['trtw']) this.$refs['trtw'].showTab();
@@ -200,30 +177,13 @@ export default {
 
 <style lang="scss" scoped>
 	/* ============================================================
-	   通讯录页 —— V2EX 风格
+	   通讯录页 —— 三栏顶栏 + 快速入口 + 字母分组联系人
 	   行、头像、角标等基础件在 App.vue 全局样式里。
 	   ============================================================ */
 	.msm-page {
 		min-height: 100vh;
 		background: var(--msm-background);
 		padding-bottom: 16px;
-	}
-
-	.msm-search__input {
-		flex: 1;
-		min-width: 0;
-		font-size: 13px;
-		color: var(--msm-text);
-		background: transparent;
-	}
-
-	.msm-search__ph {
-		color: var(--msm-text-faint);
-		font-size: 13px;
-	}
-
-	.msm-search__clear {
-		padding-left: 6px;
 	}
 
 	/* ---------- 快速入口卡片 ---------- */
