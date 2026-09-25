@@ -46,6 +46,19 @@ Get-ChildItem $SRC -File -Filter '*.md' | Where-Object { $_.Name -ne '凭据.md'
 Write-Host "    (已跳过 凭据.md —— 含明文口令，不入库)"
 Get-ChildItem $SRC -File -Filter '*.cmd' | ForEach-Object { Copy-Item $_.FullName "$OUT\" -Force }
 
+# 仓库根目录的 README.md / .gitignore 是仓库专属的，不在 $SRC 里，
+# 单独固化成 tools\_repo-root\；没有这一步，每次重建都会把仓库首页删掉。
+Write-Host "=== 3.5) 仓库根文件（README / .gitignore）==="
+$rootSrc = Join-Path $SRC 'tools\_repo-root'
+if (Test-Path $rootSrc) {
+    Get-ChildItem $rootSrc -File -Force | ForEach-Object {
+        Copy-Item $_.FullName (Join-Path $OUT $_.Name) -Force
+        Write-Host ("    " + $_.Name)
+    }
+} else {
+    Write-Host "    ! 缺少 tools\_repo-root —— README.md / .gitignore 不会生成"
+}
+
 Write-Host "`n=== 4) 脱敏 ==="
 # 注意：规则里的正则需要转义（^ * 等前面要加反斜杠），
 #       但「带反斜杠的写法」和「真实口令」不是同一个字符串 —— 正则匹配的是不带反斜杠的原文，

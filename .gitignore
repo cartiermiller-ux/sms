@@ -1,0 +1,49 @@
+﻿# ---------- 依赖与构建产物 ----------
+node_modules/
+dist/
+unpackage/
+target/
+logs/
+*.log
+
+# ---------- 签名密钥（绝不提交）----------
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+
+# ---------- 打包产物 ----------
+*.apk
+*.aab
+*.ipa
+*.jar
+*.war
+*.zip
+*.tar.gz
+
+# ---------- 开发工具链（体积大，按需自行下载）----------
+tools/jdk8u504-b01/
+tools/apache-maven-*/
+dl/
+
+# ---------- 原生插件（约 130 MB，从插件市场获取）----------
+frontend/src/nativeplugins/
+
+# ---------- 编辑器 / 系统 ----------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.bak
+*.bak_*
+.*.tmpdir/
+
+# ---------- 本地私有配置 ----------
+.env
+.env.local
+*.local.yml
