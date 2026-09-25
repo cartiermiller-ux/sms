@@ -15,51 +15,51 @@
 		</view>
 
 		<form class="auth__form" @submit="sublogin">
-			<!-- 手机号码 -->
-			<view class="field">
-				<view class="field__label">手机号码</view>
-				<view class="field__box">
-					<view class="field__cc">+{{ countryCode }}</view>
-					<view class="field__sep"></view>
-					<input class="field__input" maxlength="11" type="text" placeholder="请输入手机号码" placeholder-class="field__ph" name="phone" v-model="phone" />
-					<view class="field__suffix" v-if="phone.length > 0" @click="phone = ''">
+			<!-- 手机号码（左侧固定宽标签 + 右侧输入，只保留下划线） -->
+			<view class="form-item">
+				<view class="form-item__label">手机号码</view>
+				<view class="form-item__field">
+					<text class="form-item__cc">+{{ countryCode }}</text>
+					<view class="form-item__sep"></view>
+					<input class="form-item__input" maxlength="11" type="text" placeholder="请输入手机号码" placeholder-class="form-item__ph" name="phone" v-model="phone" />
+					<view class="form-item__suffix" v-if="phone.length > 0" @click="phone = ''">
 						<uni-icons type="clear" size="18" color="#8696A0"></uni-icons>
 					</view>
 				</view>
 			</view>
 
 			<!-- 验证码 -->
-			<view class="field">
-				<view class="field__label">验证码</view>
-				<view class="field__box">
-					<input class="field__input" type="text" placeholder="请输入验证码" placeholder-class="field__ph" name="code" v-model="code" />
-					<view class="field__code" :class="{ 'field__code--dim': loading }" @click="loading ? null : getMsgCode()">
+			<view class="form-item">
+				<view class="form-item__label">验证码</view>
+				<view class="form-item__field">
+					<input class="form-item__input" type="text" placeholder="请输入验证码" placeholder-class="form-item__ph" name="code" v-model="code" />
+					<view class="form-item__code" :class="{ 'form-item__code--dim': loading }" @click="loading ? null : getMsgCode()">
 						{{ loading ? time + 's 后重发' : '获取验证码' }}
 					</view>
 				</view>
 			</view>
 
-			<!-- 昵称（已按 手机号 → 验证码 → 昵称 → 密码 的顺序调整） -->
-			<view class="field">
-				<view class="field__label">昵称</view>
-				<view class="field__box">
-					<input class="field__input" type="text" placeholder="你的昵称" placeholder-class="field__ph" name="nickName" />
+			<!-- 昵称（顺序：手机号 → 验证码 → 昵称 → 密码） -->
+			<view class="form-item">
+				<view class="form-item__label">昵称</view>
+				<view class="form-item__field">
+					<input class="form-item__input" type="text" placeholder="你的昵称" placeholder-class="form-item__ph" name="nickName" />
 				</view>
 			</view>
 
 			<!-- 密码 -->
-			<view class="field">
-				<view class="field__label">密码</view>
-				<view class="field__box">
-					<input class="field__input" type="text" placeholder="设置密码（8-20 位）" placeholder-class="field__ph" name="password" :password="showPassword" />
-					<view class="field__suffix" @click="changePassword">
+			<view class="form-item">
+				<view class="form-item__label">密码</view>
+				<view class="form-item__field">
+					<input class="form-item__input" type="text" placeholder="设置密码（8-20 位）" placeholder-class="form-item__ph" name="password" :password="showPassword" />
+					<view class="form-item__suffix" @click="changePassword">
 						<uni-icons :type="showPassword ? 'eye-slash' : 'eye'" size="19" color="#8696A0"></uni-icons>
 					</view>
 				</view>
 			</view>
 
-			<!-- 协议 -->
-			<view class="auth__agree">
+			<!-- 协议（弱化：12px 浅灰） -->
+			<view class="auth__agree auth__agree--top">
 				<view class="auth__agree-tap" @click="agree = !agree">
 					<checkbox style="transform:scale(0.6);pointer-events:none" :checked="agree" color="#2F8FE5" />
 					<text class="auth__agree-text">我已阅读并同意</text>

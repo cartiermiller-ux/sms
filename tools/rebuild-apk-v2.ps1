@@ -7,7 +7,7 @@ param(
     [string]$BaseApk  = "C:\我的下载\Uniapp+SpringBoot即时通讯APP源码 安卓iOS跨端\_deploy\android-webview\Msm-1.3.1-修正版.apk",
     [string]$RuntimeManifestSrc = "C:\我的下载\Uniapp+SpringBoot即时通讯APP源码 安卓iOS跨端\_deploy\android-webview\Msm-正式版-v1.2.0.apk",
     [string]$AppDist   = "C:\im-local\hx-frontend\dist\build\app",
-    [string]$OutApk    = "C:\im-local\Msm-1.4.0-V2EX.apk",
+    [string]$OutApk    = "C:\im-local\Msm-1.4.1-V2EX.apk",
     [string]$Keystore  = "C:\im-local\app-cert.keystore",
     [string]$Alias     = "__uni__510b38e",
     [string]$StorePass = "<REDACTED_KEYSTORE_PW>",
@@ -49,8 +49,14 @@ $mtxt = Read-ZipText $RuntimeManifestSrc ($PREFIX + 'manifest.json')
 if (-not $mtxt) { throw "没找到运行时 manifest 模板" }
 $m = $mtxt | ConvertFrom-Json
 
-$m.version.name = '1.4.0'
-$m.version.code = 140
+# 版本号直接从 app 构建产物读，不要在脚本里硬编码 ——
+# 硬编码过两次，每次都出现「改了一处忘了另一处」导致的版本漂移。
+$appMf = Join-Path $AppDist 'manifest.json'
+if (-not (Test-Path $appMf)) { throw "找不到 app 产物 manifest: $appMf" }
+$appM = [System.IO.File]::ReadAllText($appMf, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+$m.version.name = $appM.version.name
+$m.version.code = $appM.version.code
+Write-Host ("      版本号取自 app 产物: {0}({1})" -f $m.version.name, $m.version.code)
 
 $tb = $m.'plus'.tabBar
 $tb.color         = '#8696A0'

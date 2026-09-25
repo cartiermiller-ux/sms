@@ -11,14 +11,14 @@
 			<view class="autodownView"></view>
 		</view>
 		<view :style="'height: ' + keyboardHeight + 'px'"></view>
-		<view v-if="showtool || showEmojitool" :style="'height:558rpx'"></view>
+		<view v-if="showtool || showEmojitool" class="zfb-tk-tool-space"></view>
 		<view class="zfb-tk-send-tool" :style="'transform: translateY(-' + keyboardHeight + 'px)'">
 			<view class="zfb-tk-send-tool-c">
 				<view class="zfb-tk-send-tool-icon wxfont" @click="changeShowVice" :class="showVice ? 'jianpan' : 'yuyin2'"></view>
 				<view class="zfb-tk-send-tool-vioce" v-if="showVice"><view class="zfb-tk-send-tool-vioce-item" @longpress="startRecord" @touchend="endRecord">按住说话</view></view>
 				<view v-else class="zfb-tk-send-tool-input-box" @click="msgFocus = true"><textarea @focus="showtool = false" :focus="msgFocus" class="zfb-tk-send-tool-input" :adjust-position="false" v-model="msg" placeholder="" hold-keyboard confirm-type="send" @confirm="sendMsg(msg, 'TEXT')" :maxlength="-1" auto-height /></view>
 				<view @click="changeEmojiTool" class="zfb-tk-send-tool-more wxfont biaoqing"></view>
-				<view v-if="msg !== ''" class="zfb-tk-send-tool-text" @touchend.prevent="sendMsg(msg, 'TEXT')" :style="{ background: msg !== '' ? '#1BC418' : '#F7F7F7', color: msg !== '' ? '#fff' : '#ddd', 'border-color': msg !== '' ? '#1BC418' : '#ddd' }">发送</view>
+				<view v-if="msg !== ''" class="zfb-tk-send-tool-text" @touchend.prevent="sendMsg(msg, 'TEXT')">发送</view>
 				<view v-else @click="changeTool" class="zfb-tk-send-tool-more wxfont gengduo"></view>
 			</view>
 			<view v-if="showtool" class="zfb-tk-send-tools">
@@ -714,65 +714,31 @@ export default {
 	background: none;
 }
 
+/* ---------- 消息区 ---------- */
 .zfb-tk-main {
-	padding: 0 12px;
-	padding-bottom: 112rpx;
+	padding: 8px 16px 0;
+	padding-bottom: 62px;
 }
 
+/* ---------- 输入栏 ---------- */
 .zfb-tk-send-tool {
-	background: #f7f7f7;
+	background: var(--msm-surface);
 	position: fixed;
 	left: 0;
 	bottom: 0;
 	width: 100%;
 	transition: all 0.1s;
-}
-.zfb-tk-send-tools {
-	height: 558rpx;
-	width: 100%;
-	background-color: #f7f7f7;
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	align-items: center;
-}
-.zfb-tk-send-tools-item {
-	padding: 35rpx;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-}
-.zfb-tk-send-tools-icon {
-	background-color: #fff;
-	width: 110rpx;
-	height: 110rpx;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	border-radius: 12rpx;
-}
-.zfb-tk-send-tools-icon .wxfont {
-	color: #181818;
-	font-size: 64rpx;
-}
-.zfb-tk-send-tools-text {
-	font-size: 24rpx;
-	color: #666;
-	margin-top: 16rpx;
+	border-top: 1px solid var(--msm-divider);
 }
 .zfb-tk-send-tool-c {
 	position: relative;
 	z-index: 3;
-	padding: 16rpx 12rpx;
+	padding: 8px 10px;
 	box-sizing: border-box;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-around;
-	border: 1px #ddd solid;
-	border-left: none;
-	border-right: none;
 }
 
 .zfb-tk-send-tool-c .zfb-tk-send-tool-btn {
@@ -780,56 +746,99 @@ export default {
 }
 .zfb-tk-send-tool-input-box {
 	overflow: auto;
-	width: 100%;
-	margin: 0 12rpx;
-	min-height: 75rpx;
-	background-color: #fff;
-	border-radius: 24rpx;
-	padding-top: 18rpx;
-	max-height: 225rpx;
+	flex: 1;
+	margin: 0 8px;
+	min-height: 38px;
+	max-height: 116px;
+	background: var(--msm-surface-sunken);
+	border-radius: 19px;
 	box-sizing: border-box;
+	padding: 9px 14px;
 }
 .zfb-tk-send-tool .zfb-tk-send-tool-input {
-	padding: 0 24rpx;
-	box-sizing: border-box !important;
+	padding: 0;
 	width: 100%;
-	background: #fff;
+	background: transparent;
+	font-size: 15px;
+	line-height: 20px;
+	color: var(--msm-text);
 }
 .zfb-tk-send-tool-vioce {
 	box-sizing: border-box;
-	margin: 0 12rpx;
-	width: 100%;
-	height: 75rpx;
-	border-radius: 24rpx;
-	background: #fff;
+	flex: 1;
+	margin: 0 8px;
+	height: 38px;
+	border-radius: 19px;
+	background: var(--msm-surface-sunken);
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 }
 .zfb-tk-send-tool-vioce-item {
 	text-align: center;
-	font-size: 24rpx;
-	line-height: 75rpx;
+	font-size: 14px;
+	line-height: 38px;
 	flex: 1;
 }
 .zfb-tk-send-tool-vioce-item:nth-child(1) {
-	border-right: 1px #eee solid;
+	border-right: 1px solid var(--msm-divider);
 }
 .zfb-tk-send-tool-text {
 	white-space: nowrap;
-	padding: 10rpx 24rpx;
-	border-radius: 12rpx;
-	border: 1px #ddd solid;
-	background: #f7f7f7;
-	color: #ddd;
+	padding: 9px 16px;
+	border-radius: 10px;
+	background: var(--msm-primary);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 600;
 }
-.zfb-tk-send-tool-more {
-	font-size: 64rpx;
-	color: #333;
-}
+.zfb-tk-send-tool-more,
 .zfb-tk-send-tool-icon {
-	font-size: 64rpx;
-	color: #333;
+	font-size: 28px;
+	color: var(--msm-text-secondary);
+}
+
+/* ---------- 工具面板（附件） ---------- */
+.zfb-tk-tool-space {
+	height: 200px;
+}
+.zfb-tk-send-tools {
+	height: 200px;
+	width: 100%;
+	background: var(--msm-surface);
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	padding: 8px 12px;
+	box-sizing: border-box;
+}
+.zfb-tk-send-tools-item {
+	padding: 12px 6px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 25%;
+	box-sizing: border-box;
+}
+.zfb-tk-send-tools-icon {
+	background: var(--msm-primary-light);
+	width: 52px;
+	height: 52px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	border-radius: 14px;
+}
+.zfb-tk-send-tools-icon .wxfont {
+	color: var(--msm-primary);
+	font-size: 30px;
+}
+.zfb-tk-send-tools-text {
+	font-size: 12px;
+	color: var(--msm-text-secondary);
+	margin-top: 8px;
 }
 .zfb-tk-recorder {
 	width: 250rpx;
@@ -867,7 +876,7 @@ export default {
 	z-index: 9999;
 }
 .wxemojitool {
-	height: 558rpx;
+	height: 200px;
 }
 .wxemojitool-content {
 	display: flex;
@@ -875,9 +884,9 @@ export default {
 	flex-wrap: wrap;
 }
 .wxemojitool-item {
-	font-size: 44rpx;
-	width: 93rpx;
-	height: 93rpx;
+	font-size: 26px;
+	width: 44px;
+	height: 44px;
 	display: flex;
 	flex-direction: row;
 	justify-content: center;

@@ -72,35 +72,50 @@ export default {
 </script>
 
 <style scoped>
+/* ============================================================
+   Msm 通用功能列表（Compact Density）
+   —— 与全局 .msm-card / .msm-cell 视觉一致：
+      白底卡片、12px 左右边距、行高 52px、16px 标题、13px 右侧值
+   ============================================================ */
 .xw-tool-list {
 	display: flex;
 	flex-direction: column;
-	background-color: #ffffff;
-	margin-bottom: 18rpx;
+	background-color: var(--msm-surface, #ffffff);
+	border-radius: var(--msm-radius-md, 14px);
+	margin: 0 12px 10px;
+	overflow: hidden;
 }
 
 .xw-tool-item {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	padding: 26rpx 24rpx;
-	border-bottom: 1px #eee solid;
+	min-height: 52px;
+	padding: 8px 16px;
+	border-bottom: 1px solid var(--msm-divider, #E9EDEF);
+	font-size: 16px;
+	color: var(--msm-text, #111B21);
+	box-sizing: border-box;
+}
+.xw-tool-item:active {
+	background: var(--msm-surface-sunken, #F0F4F6);
 }
 .xw-tool-item:nth-last-child(1) {
-	border: none;
+	border-bottom: none;
 }
 .xw-tool-img {
-	width: 52rpx;
-	height: 52rpx;
-	margin-right: 24rpx;
+	width: 24px;
+	height: 24px;
+	margin-right: 12px;
+	border-radius: 6px;
+	flex-shrink: 0;
 }
 
 .xw-tool-text {
 	white-space: nowrap;
 	margin-right: auto;
-}
-
-.xw-tool-badge {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .xw-tool-else {
@@ -110,36 +125,46 @@ export default {
 	flex-wrap: wrap;
 }
 .xw-tool-else image {
-	width: 60rpx;
-	height: 60rpx;
-	border-radius: 6rpx;
+	width: 28px;
+	height: 28px;
+	border-radius: 6px;
 }
 .xw-tool-else .text {
-	color: #666;
+	color: var(--msm-text-muted, #8696A0);
+	font-size: 13px;
 	overflow: hidden;
-	text-overflow:ellipsis;
+	text-overflow: ellipsis;
 	white-space: nowrap;
-	max-width: 520rpx;
+	max-width: 200px;
 }
 .xw-tool-else image,
 .xw-tool-else .text {
-	margin-left: 12rpx;
+	margin-left: 8px;
 }
 
 .xw-tool-right {
-	margin-left: 12rpx;
+	margin-left: 8px;
 }
 .xw-tool-btn-item{
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
-	padding: 34rpx 44rpx;
-	border-bottom: 1px #eee solid;
-	font-weight: bold;
-	color: #5F698C;
+	min-height: 50px;
+	padding: 8px 16px;
+	border-bottom: 1px solid var(--msm-divider, #E9EDEF);
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--msm-primary, #2F8FE5);
+	box-sizing: border-box;
+}
+.xw-tool-btn-item:active {
+	background: var(--msm-surface-sunken, #F0F4F6);
+}
+.xw-tool-btn-item:nth-last-child(1) {
+	border-bottom: none;
 }
 .xw-tool-btn-icon{
-	margin-right: 14rpx;
+	margin-right: 8px;
 }
 </style>

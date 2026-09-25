@@ -1,12 +1,13 @@
 <template>
 	<view class="bgColor">
+		<view class="msm-gap"></view>
 		<tool-list-wx :list="list2" @onlongpress="onlongpress" @itemClick="itemClick0"></tool-list-wx>
 		<tool-list-wx :list="list3" @itemClick="itemClick"></tool-list-wx>
 		<tool-list-wx :list="list4" @itemClick="itemClick2"></tool-list-wx>
 		<view class="xw-tool-list">
 			<view class="xw-tool-list-content">
 				<view class="xw-tool-btn-item" @click="loginOut">
-					<view class="xw-tool-btn-text" style="color: #FF5A5F;">退出登录</view>
+					<view class="xw-tool-btn-text">退出登录</view>
 				</view>
 			</view>
 		</view>
@@ -226,32 +227,41 @@
 	    left: 0;
 	    right: 0;
 	    bottom: 0;
-	    background: #EDEDED;
+	    background: var(--msm-background, #F7F9FA);
 	    z-index: -1;
 		overflow: auto;
 	  }
 	/* #endif */
 	/* #ifdef H5 */
 	page{
-		background: #EDEDED;
+		background: var(--msm-background, #F7F9FA);
 	}
 	/* #endif */
 	.xw-tool-list {
 		display: flex;
 		flex-direction: column;
-		background-color: #ffffff;
-		margin-bottom: 18rpx;
+		background-color: var(--msm-surface, #ffffff);
+		border-radius: var(--msm-radius-md, 14px);
+		margin: 0 12px 10px;
+		overflow: hidden;
 	}
-	
+
 	.xw-tool-btn-item{
 		display: flex;
 		flex-direction: row;
 		align-items: center;
 		justify-content: center;
-		padding: 34rpx 44rpx;
-		border-bottom: 1px #eee solid;
-		font-weight: bold;
-		color: #5F698C;
+		min-height: 50px;
+		padding: 8px 16px;
+		font-size: 15px;
+		font-weight: 500;
 	}
-	
+
+	.xw-tool-btn-item:active {
+		background: var(--msm-surface-sunken, #F0F4F6);
+	}
+
+	.xw-tool-btn-text {
+		color: #EA4335;
+	}
 </style>

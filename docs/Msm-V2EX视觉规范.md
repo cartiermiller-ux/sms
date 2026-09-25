@@ -17,7 +17,7 @@
 |---|---|---|
 | 主色 | 无彩色，`#333333` | **品牌蓝 `#2F8FE5`，但只作「焦点」** |
 | 品牌蓝用途 | 全部移除 | 选中态 / 链接 / 未读角标 / 输入框聚焦边框 |
-| 主按钮 | `#333333` | **墨黑 `#111B21`**（蓝**不**做大面积色块） |
+| 主按钮 | `#333333` | **品牌蓝 `#2F8FE5`**（第三轮由墨黑改回，见下表） |
 | 文字 | `#111111`/`#666666`/`#999999` | **`#111B21`/`#667781`/`#8696A0`** |
 | 分割线 | `#E5E5E5` | **`#E0E0E0`** |
 | 圆角 | 2–6px | **卡片/按钮 0–2px，头像直角** |
@@ -46,9 +46,9 @@
 --msm-primary-dark:   #1F7ACC;   /* 蓝色按下态 */
 --msm-primary-light:  #EAF4FD;   /* 极浅蓝，仅确需底色时用 */
 
-/* 墨黑：主按钮与标题（呼应 Logo 的深色） */
+/* 墨黑：标题与正文（不再用于按钮） */
 --msm-ink:            #111B21;
---msm-ink-dark:       #000000;   /* 主按钮按下态 */
+--msm-ink-dark:       #000000;   /* 墨色按下态 */
 
 /* 文字 */
 --msm-text:           #111B21;   /* 页面大标题、列表主标题 */
@@ -61,7 +61,8 @@
 --msm-background:     #F5F5F5;   /* 页面底（用来衬托纯白卡片） */
 --msm-surface:        #FFFFFF;   /* 卡片 / 列表 / 搜索框 / 输入框 */
 --msm-surface-sunken: #F5F5F5;   /* 按下态 */
---msm-divider:        #E0E0E0;   /* 1px 极细分割线 */
+--msm-divider:        #E0E0E0;   /* 1px 极细分割线（列表行） */
+--msm-divider-light:  #EAEAEA;   /* 更浅一档：表单输入行下划线 */
 
 /* 语义色：只用于状态，不作装饰 */
 --msm-success:        #388E3C;   /* 成功 / 已发送 */
@@ -81,7 +82,8 @@
 > 4. **聚焦边框**：输入框 / 搜索框获得焦点时
 >
 > **绝对不能用的地方**：
-> - ❌ 主按钮背景（用墨黑 `--msm-ink`）
+> - ❌ ~~主按钮背景（用墨黑 `--msm-ink`）~~ —— **此条已在第三轮作废**：
+>   实测「纯黑太重」，主按钮改为品牌蓝 `#2F8FE5`
 > - ❌ 大面积底色、图标底块、卡片背景
 > - ❌ 普通图标（用 `#667781`）
 > - ❌ 普通正文（用 `#111B21` / `#667781`）
@@ -112,7 +114,8 @@
 
 | 元素 | 尺寸 |
 |---|---|
-| 主按钮 | 高 **48px**，圆角 2px，背景**墨黑** |
+| 主按钮 | 高 **48px**，圆角 2px，背景**品牌蓝 `#2F8FE5`** |
+| 幽灵按钮 | 高 48px，透明底 + `1px #111B21` 描边 + 墨色文字（次要行动，视觉重量最轻） |
 | 小按钮 | 高 36px |
 | 输入框 | 高 **48px**，白底 + **1px `#E0E0E0` 边框**，圆角 2px，**聚焦变蓝** |
 | 搜索框 | 高 **36px**，白底 + 1px 边框，圆角 **4px**，**聚焦变蓝** |
@@ -196,8 +199,81 @@
 | `.msm-dot` / `--off` / `--inline` | 在线墨色点 / 离线浅灰点 / 行内 |
 | `.msm-tag` | 小标签（浅灰底） |
 | `.msm-empty` / `__art` / `__title` / `__desc` | 空状态（**只放灰色线条图标 + 灰字，无底块**） |
-| `.msm-btn` / `--block` / `--ghost` / `--text` / `--danger` / `--sm` | 按钮（主按钮**墨黑**，`--text` 为蓝色文字按钮） |
+| `.msm-btn` / `--block` / `--ghost` / `--text` / `--danger` / `--sm` | 按钮（主按钮**品牌蓝**；`--ghost` 为白底深色描边；`--text` 为蓝色文字按钮） |
 | `.msm-link` | 链接文字（品牌蓝） |
+
+---
+
+## 二之二、启动页与认证页（第三轮改造）
+
+### 2.2.1 启动页 —— 单一入口 + 卖点填充
+
+| 项 | 改前 | 改后 |
+|---|---|---|
+| Logo | 210×75 | **168×60**（缩小，把空间让给下方） |
+| 标语 | `Connect freely.` + `和重要的人保持联系` | 不变 |
+| 卖点 | 无（上方大片留白） | **4 条带蓝点的卖点**（`.splash__features`） |
+| 入口 | 「登录」蓝色大按钮 + 「还没有账号？创建新账号」链接 | **唯一入口「开始使用」**，去掉注册链接 |
+| 按钮样式 | 品牌蓝实心 | **幽灵按钮**：透明底 + `1px #111B21` 描边 + 墨色文字 |
+
+> 逻辑：真正的蓝色主按钮在登录页。启动页只负责「进入」，所以降级为幽灵按钮以降低视觉重量。
+> 「开始使用」跳登录页 —— 该页同时提供「登录」与「注册」两条路径。
+
+卖点文案只列**真实已实现**的能力（消息/群聊、语音视频通话、朋友圈、扫一扫），
+**不要写「端到端加密」这类本产品没有的卖点**。
+
+### 2.2.2 认证页表单 —— 下划线输入行
+
+login / register / forgetPass 三页共用 `common/msm-auth.scss`。
+
+| 项 | 改前 | 改后 |
+|---|---|---|
+| 输入框 | 白底 + 1px 全边框 + 圆角 4px，标签在上方单独一行 | **只有一条下划线**（`1px #EAEAEA`），标签与输入**水平并排** |
+| 标签 | 独立一行（`.field__label`） | 左侧固定 **76px** 宽（`.form-item__label`） |
+| 聚焦 | 整框边框变蓝 | **下划线变蓝**（`.form-item:focus-within`） |
+| 「或」分割线 | 有 | **已删除** |
+| 忘记密码 / 切换登录方式 | 各自独立成行 | **同一行左右各一个**（`.auth__links`，`space-between`） |
+| 提交按钮 | 墨黑 `#111B21`，可能被默认 padding 撑高 | **品牌蓝 `#2F8FE5`**，`height: 48px` + `padding: 0` + `box-sizing: border-box` |
+| 协议行 | 13px `#667781` | **12px `#8696A0`**（更轻，不抢视觉） |
+
+结构：
+
+```html
+<view class="form-item">
+  <view class="form-item__label">手机号码</view>
+  <view class="form-item__field">
+    <text class="form-item__cc">+86</text>
+    <view class="form-item__sep"></view>
+    <input class="form-item__input" placeholder="请输入手机号码" placeholder-class="form-item__ph" />
+  </view>
+</view>
+```
+
+```css
+.form-item {
+  display: flex; align-items: center; min-height: 54px;
+  border-bottom: 1px solid var(--msm-divider-light);
+}
+.form-item:focus-within { border-bottom-color: var(--msm-primary); }
+.form-item__label { width: 76px; flex-shrink: 0; color: var(--msm-text); }
+.form-item__field { flex: 1; min-width: 0; display: flex; align-items: center; }
+.form-item__input { flex: 1; border: none; outline: none; background: transparent; color: var(--msm-text); }
+.form-item__ph { color: var(--msm-text-muted); }   /* 只有占位符是浅灰 */
+```
+
+> ⚠️ 占位符用浅灰 `#8696A0`，**已填写的值用正文色 `#111B21`**。
+> 原始 brief 的示例里 `.input { color: #999 }` 会把已填内容也变浅灰，可读性差，故未采纳。
+
+### 2.2.3 实测数据（线上 390×844 环境）
+
+| 元素 | 实测值 |
+|---|---|
+| 登录提交按钮 | h **48px**、`rgb(47,143,229)`、radius 2px、padding 0 |
+| 输入行 | h 55px、下划线 `rgb(234,234,234)`、无其他边框 |
+| 链接行 | `display:flex` + `justify-content:space-between`，文案 `["忘记密码？","使用验证码登录"]` |
+| 协议行 | 12px / `rgb(134,150,160)` |
+| 启动页按钮 | 透明底 + `1px rgb(17,27,33)` 描边、文案「开始使用」 |
+| 「或」分割线 | 已消除（DOM 中无 `.auth__or`） |
 
 ---
 

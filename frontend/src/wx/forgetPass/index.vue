@@ -1,40 +1,72 @@
 <template>
-	<view class="wx-login">
-		<view class="wx-login-title">找回密码</view>
-		<view class="xw-login-form">
-			<form @submit="sublogin">
-				<view class="xw-login-form-item">
-					<view class="xw-login-form-label">手机号</view>
-					<input class="xw-login-form-input" maxlength="11" placeholder="请填写手机号" type="text" name="phone" v-model="phone" />
-					<view class="login-form-icon login-form-seepass" @click="phone=''" v-if="phone.length>0">
-						<uni-icons type="clear" size="26" color="#B9CCE0"></uni-icons>
+	<view class="auth">
+		<!-- 返回 -->
+		<view class="auth__nav">
+			<view class="auth__back" hover-class="auth__back--active" @click="goBack">
+				<uni-icons type="left" size="21" color="#111B21"></uni-icons>
+			</view>
+		</view>
+
+		<!-- 品牌头 -->
+		<view class="auth__head">
+			<image class="auth__logo" src="../../static/msm/logo.png" mode="aspectFit"></image>
+			<view class="auth__title">找回密码</view>
+			<view class="auth__sub">验证手机号后设置新密码</view>
+		</view>
+
+		<form class="auth__form" @submit="sublogin">
+			<!-- 手机号码（左侧固定宽标签 + 右侧输入，只保留下划线） -->
+			<view class="form-item">
+				<view class="form-item__label">手机号码</view>
+				<view class="form-item__field">
+					<text class="form-item__cc">+{{ countryCode }}</text>
+					<view class="form-item__sep"></view>
+					<input class="form-item__input" maxlength="11" type="text" placeholder="请输入手机号码" placeholder-class="form-item__ph" name="phone" v-model="phone" />
+					<view class="form-item__suffix" v-if="phone.length > 0" @click="phone = ''">
+						<uni-icons type="clear" size="18" color="#8696A0"></uni-icons>
 					</view>
 				</view>
-				<view class="xw-login-form-item">
-					<view class="xw-login-form-label">验证码</view>
-					<input class="xw-login-form-input" placeholder="请填写验证码" v-model="code" name="code" type="text" />
-					<view class="wx-btn wx-btn-info" @click="getMsgCode()" v-if="!loading">获取验证码</view>
-					<view class="wx-btn wx-btn-info" v-else>{{time}}秒后重试</view>
-				</view>
-				<view class="xw-login-form-item">
-					<view class="xw-login-form-label">新密码</view>
-					<input class="xw-login-form-input" placeholder="请输入密码" name="password" :password="showPassword"
-						type="text" value="" />
-					<view class="login-form-icon login-form-seepass" @click="changePassword">
-						<image src="../../static/img/l03.png" mode="aspectFill" v-if="showPassword"></image>
-						<image src="../../static/img/l04.png" mode="aspectFill" v-else></image>
+			</view>
+
+			<!-- 验证码 -->
+			<view class="form-item">
+				<view class="form-item__label">验证码</view>
+				<view class="form-item__field">
+					<input class="form-item__input" type="text" placeholder="请输入验证码" placeholder-class="form-item__ph" name="code" v-model="code" />
+					<view class="form-item__code" :class="{ 'form-item__code--dim': loading }" @click="loading ? null : getMsgCode()">
+						{{ loading ? time + 's 后重发' : '获取验证码' }}
 					</view>
 				</view>
-				<text class="xw-login-form-code" @click="goLogin">已修改，去登录</text>
-				<button class="wx-btn wx-btn-info xw-login-form-btn" form-type="submit">找回密码</button>
-				<view class="login-agree">
-					<view class="login-agree-checkd" @click="agree = !agree">
-						<checkbox id="agree" style="transform:scale(0.7);pointer-events:none" :checked="agree" />
-						<text class="login-agree-btn">已阅读并同意</text>
+			</view>
+
+			<!-- 新密码 -->
+			<view class="form-item">
+				<view class="form-item__label">新密码</view>
+				<view class="form-item__field">
+					<input class="form-item__input" type="text" placeholder="设置新密码（8-20 位）" placeholder-class="form-item__ph" name="password" :password="showPassword" />
+					<view class="form-item__suffix" @click="changePassword">
+						<uni-icons :type="showPassword ? 'eye-slash' : 'eye'" size="19" color="#8696A0"></uni-icons>
 					</view>
-					<view class="login-agree-text" @click="goagreement()">《隐私及服务协议》</view>
 				</view>
-			</form>
+			</view>
+
+			<!-- 协议（弱化：12px 浅灰） -->
+			<view class="auth__agree auth__agree--top">
+				<view class="auth__agree-tap" @click="agree = !agree">
+					<checkbox style="transform:scale(0.6);pointer-events:none" :checked="agree" color="#2F8FE5" />
+					<text class="auth__agree-text">我已阅读并同意</text>
+				</view>
+				<text class="auth__agree-link" @click="goagreement()">《隐私及服务协议》</text>
+			</view>
+
+			<!-- 找回密码 -->
+			<button class="auth__submit" form-type="submit">找回密码</button>
+		</form>
+
+		<!-- 底部 -->
+		<view class="auth__foot">
+			<text class="auth__foot-dim">已修改？</text>
+			<text class="auth__foot-strong" @click="goLogin">去登录</text>
 		</view>
 	</view>
 </template>
@@ -43,7 +75,8 @@
 	export default {
 		data() {
 			return {
-				code:'',
+				code: '',
+				countryCode: '86',
 				loading: false,
 				timer: null,
 				time: 60,
@@ -56,10 +89,18 @@
 		},
 		onLoad() {},
 		methods: {
+			goBack() {
+				const pages = getCurrentPages();
+				if (pages && pages.length > 1) {
+					uni.navigateBack();
+				} else {
+					uni.reLaunch({ url: '/pages/wxindex/index' });
+				}
+			},
 			changePassword() {
 				this.showPassword = !this.showPassword;
 			},
-			goLogin(){
+			goLogin() {
 				uni.navigateTo({
 					url: '../login/index'
 				})
@@ -187,109 +228,6 @@
 </script>
 
 <style lang="scss" scoped>
-	.wx-login-title {
-		text-align: center;
-		padding-top: 120rpx;
-		font-size: 42rpx;
-		padding-bottom: 24rpx;
-	}
-
-	.xw-login-form {
-		padding: 34rpx;
-	}
-
-	.xw-login-form-item {
-		position: relative;
-		padding: 0 12rpx;
-		border-bottom: 1px #eee solid;
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		line-height: 100rpx;
-		height: 100rpx;
-	}
-
-	.xw-login-form-label {
-		width: 160rpx;
-		min-width: 160rpx;
-	}
-
-	.xw-login-form-input {}
-
-	.login-agree {
-		margin-top: 34rpx;
-		justify-content: center;
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-	}
-
-	/* 扩大协议勾选的可点区域：原尺寸约 104x27px，手机上很容易点空，
-	   且右侧紧邻《隐私及服务协议》链接，点偏会跳走并重置勾选状态 */
-	.login-agree-checkd {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		padding: 18rpx 12rpx;
-		min-height: 44px;
-		box-sizing: border-box;
-	}
-	.login-agree-text,
-	.login-agree-btn {
-		font-size: 24rpx;
-		color: #222;
-	}
-
-	.login-agree-text {
-		color: #8295a5;
-	}
-
-	.login-form-icon {
-		width: 50rpx;
-		height: 50rpx;
-	}
-
-	.login-form-seepass {
-		position: absolute;
-		right: 20rpx;
-		top: 50%;
-		transform: translateY(-50%);
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.login-form-icon image {
-		float: left;
-		width: 50rpx;
-		height: 50rpx;
-	}
-
-	.xw-login-form-code {
-		padding: 0 12rpx;
-		height: 100rpx;
-		line-height: 100rpx;
-		color: #8295a5;
-	}
-
-	.wx-btn {
-		min-width: 200rpx;
-		height: 75rpx;
-		line-height: 75rpx;
-		text-align: center;
-		border-radius: 12rpx;
-		background-color: #007AFF;
-		color: #fff;
-		font-size: 32rpx;
-	}
-
-	.wx-btn-info {
-		background-color: #05C160;
-	}
-
-	.xw-login-form-btn {
-		width: 300rpx;
-		margin-top: 120rpx;
-	}
+	/* 认证页共用样式：白底 + Msm Blue */
+	@import '@/common/msm-auth.scss';
 </style>

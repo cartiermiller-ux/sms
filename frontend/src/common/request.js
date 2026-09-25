@@ -104,8 +104,8 @@ function request(con) {
 					})
 					// },1000)
 				}
-				// #ifdef APP-PLUS
 				if (res.data.code == 601) { //强制拉起升级
+					// #ifdef APP-PLUS
 					request({
 						url: '/common/getVersion',
 						success: (res) => {
@@ -118,8 +118,13 @@ function request(con) {
 							appUpgrade.show();
 						}
 					});
+					// #endif
+					// #ifndef APP-PLUS
+					// H5 / 小程序端：601 是后端给 App 客户端的强升标记，网页刷新即最新、无法升级，
+					// 这里静默跳过，避免把后端 msg（"版本过低，请升级"）误弹给用户
+					console.log('[601] 版本校验未通过，H5 端跳过强升处理', con.url);
+					// #endif
 				}
-				// #endif
 				else if (res.data.code && res.data.code !== 200) { //这里code是自己的服务器正确标识
 					uni.showToast({
 						title: res.data.msg,

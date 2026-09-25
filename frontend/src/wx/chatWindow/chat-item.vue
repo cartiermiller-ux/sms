@@ -328,19 +328,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-$avatarsize: 80rpx;
-$border-radius: 12rpx;
-$textcolor: #fff;
-$descolor: #999;
-$leftbgcolor: #00aaff;
-$rightbgcolor: #4cd964;
+$avatarsize: 72rpx;   /* 36px */
+$border-radius: 16rpx; /* 8px */
 
 .zfb-tk-item {
 	position: relative;
 	display: flex;
 	align-items: flex-start;
 	flex-wrap: wrap;
-	margin: 5px 0;
+	margin: 6px 0;
 }
 
 .zfb-tk-item .zfb-tk-item-c text {
@@ -358,38 +354,19 @@ $rightbgcolor: #4cd964;
 	flex-direction: row;
 }
 
-.zfb-tk-item .zfb-tk-item-c::after {
-	position: absolute;
-	content: '';
-	width: 14rpx;
-	height: 14rpx;
-	top: 34rpx;
-	transform: rotate(45deg);
-}
-
-.zfb-tk-msgleft .zfb-tk-item-c::after {
-	background: $leftbgcolor;
-	left: -7rpx;
-}
-
-.zfb-tk-msgright .zfb-tk-item-c::after {
-	background: $rightbgcolor;
-	right: -7rpx;
-}
-
 .zfb-tk-avatar {
 	min-width: $avatarsize;
 	width: $avatarsize;
 	height: $avatarsize;
-	border-radius: $border-radius;
+	border-radius: 50%;
 }
 
 .zfb-tk-msgleft .zfb-tk-avatar {
-	margin-right: 12rpx;
+	margin-right: 10rpx;
 }
 
 .zfb-tk-msgright .zfb-tk-avatar {
-	margin-left: 12rpx;
+	margin-left: 10rpx;
 }
 
 .zfb-tk-msgright {
@@ -399,13 +376,13 @@ $rightbgcolor: #4cd964;
 }
 
 .zfb-tk-msgcenter {
-	font-size: 28rpx;
+	font-size: 12px;
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
 	float: left;
 	width: 100%;
-	color: $descolor;
+	color: var(--msm-text-muted);
 }
 
 .zfb-tk-item-c {
@@ -418,25 +395,33 @@ $rightbgcolor: #4cd964;
 .zfb-tk-msgleft .zfb-tk-item-c,
 .zfb-tk-msgright .zfb-tk-item-c {
 	min-height: $avatarsize;
-	background: $leftbgcolor;
-	color: $textcolor;
-	padding: 10px;
+	padding: 8px 12px;
+	font-size: 15px;
+	line-height: 1.4;
+}
+
+.zfb-tk-msgleft .zfb-tk-item-c {
+	background: var(--msm-surface);
+	color: var(--msm-text);
+	box-shadow: 0 1px 2px rgba(17, 27, 33, .06);
 }
 
 .zfb-tk-msgright .zfb-tk-item-c {
-	background: $rightbgcolor;
+	background: var(--msm-primary);
+	color: #fff;
 }
 
 .zfb-tk-username {
-	color: $descolor;
+	color: var(--msm-text-muted);
 }
 
 .zfb-tk-time {
-	font-size: 24rpx;
+	font-size: 11px;
 	text-align: center;
-	color: $descolor;
+	color: var(--msm-text-muted);
 	width: 100%;
 	box-sizing: border-box;
+	margin-top: 3px;
 }
 
 .zfb-tk-msgright .zfb-tk-time {
@@ -447,12 +432,13 @@ $rightbgcolor: #4cd964;
 	text-align: left;
 }
 .zfb-tk-time-notsend {
-	font-size: 64rpx;
-	color: #fa5151;
-	margin-top: 8rpx;
+	font-size: 24px;
+	color: var(--msm-danger);
+	margin-top: 6px;
 }
 .zfb-tk-item-c-LOCATION {
-	border: 1px #f6f6f6 solid;
+	background: #fff;
+	border: 1px #f0f2f4 solid;
 	display: flex;
 	flex-direction: column;
 	width: 445rpx;
@@ -518,9 +504,9 @@ $rightbgcolor: #4cd964;
 .zfb-tk-item-c-VOICE-tras text{
 	padding:6rpx 12rpx;
 	font-size: 24rpx;
-	background-color: #eee;
+	background-color: rgba(255, 255, 255, .9);
 	border-radius: 12rpx;
-	color: #bcbcbc;
+	color: var(--msm-text-secondary);
 	margin:0 12rpx;
 }
 .zfb-tk-item-c-VOICE-tras-icon{
@@ -557,9 +543,10 @@ $rightbgcolor: #4cd964;
 	display: flex;flex-direction: row;align-items: center;
 }
 .zfb-tk-item-c-CARD{
+	background: #fff;
 	width: 440rpx;
 	box-sizing: border-box;
-	border: 1px #f6f6f6 solid;
+	border: 1px #f0f2f4 solid;
 	padding: 24rpx;
 	border-radius: 12rpx;
 }

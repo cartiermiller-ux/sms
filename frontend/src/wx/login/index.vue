@@ -15,45 +15,51 @@
 		</view>
 
 		<form class="auth__form" @submit="sublogin">
-			<!-- 手机号码（区号独立，方便以后做国际化） -->
-			<view class="field">
-				<view class="field__label">手机号码</view>
-				<view class="field__box">
-					<view class="field__cc">+{{ countryCode }}</view>
-					<view class="field__sep"></view>
-					<input class="field__input" maxlength="11" type="text" placeholder="请输入手机号码" placeholder-class="field__ph" name="phone" v-model="form.phone" />
-					<view class="field__suffix" v-if="form.phone" @click="form.phone = ''">
+			<!-- 手机号码（左侧固定宽标签 + 右侧输入，只保留下划线） -->
+			<view class="form-item">
+				<view class="form-item__label">手机号码</view>
+				<view class="form-item__field">
+					<text class="form-item__cc">+{{ countryCode }}</text>
+					<view class="form-item__sep"></view>
+					<input class="form-item__input" maxlength="11" type="text" placeholder="请输入手机号码" placeholder-class="form-item__ph" name="phone" v-model="form.phone" />
+					<view class="form-item__suffix" v-if="form.phone" @click="form.phone = ''">
 						<uni-icons type="clear" size="18" color="#8696A0"></uni-icons>
 					</view>
 				</view>
 			</view>
 
 			<!-- 密码 -->
-			<view class="field" v-if="!logintype">
-				<view class="field__label">密码</view>
-				<view class="field__box">
-					<input class="field__input" type="text" placeholder="请输入密码" placeholder-class="field__ph" name="password" v-model="form.password" :password="showPassword" />
-					<view class="field__suffix" @click="changePassword">
+			<view class="form-item" v-if="!logintype">
+				<view class="form-item__label">密码</view>
+				<view class="form-item__field">
+					<input class="form-item__input" type="text" placeholder="请输入密码" placeholder-class="form-item__ph" name="password" v-model="form.password" :password="showPassword" />
+					<view class="form-item__suffix" @click="changePassword">
 						<uni-icons :type="showPassword ? 'eye-slash' : 'eye'" size="19" color="#8696A0"></uni-icons>
 					</view>
 				</view>
 			</view>
 
 			<!-- 验证码 -->
-			<view class="field" v-if="logintype">
-				<view class="field__label">验证码</view>
-				<view class="field__box">
-					<input class="field__input" type="text" placeholder="请输入验证码" placeholder-class="field__ph" name="code" v-model="form.code" />
-					<view class="field__code" :class="{ 'field__code--dim': loading }" @click="loading ? null : getMsgCode()">
+			<view class="form-item" v-if="logintype">
+				<view class="form-item__label">验证码</view>
+				<view class="form-item__field">
+					<input class="form-item__input" type="text" placeholder="请输入验证码" placeholder-class="form-item__ph" name="code" v-model="form.code" />
+					<view class="form-item__code" :class="{ 'form-item__code--dim': loading }" @click="loading ? null : getMsgCode()">
 						{{ loading ? time + 's 后重发' : '获取验证码' }}
 					</view>
 				</view>
 			</view>
 
-			<!-- 忘记密码 -->
-			<view class="auth__forgot" v-if="!logintype" @click="goForgetPass">忘记密码？</view>
+			<!-- 忘记密码 / 使用验证码登录：并排放在输入框下方，省掉原来的「或」分割线 -->
+			<view class="auth__links">
+				<text v-if="!logintype" class="auth__link" @click="goForgetPass">忘记密码？</text>
+				<view v-else></view>
+				<text class="auth__link" @click="changeLogintype">
+					{{ logintype ? '使用密码登录' : '使用验证码登录' }}
+				</text>
+			</view>
 
-			<!-- 协议 -->
+			<!-- 协议（弱化：12px 浅灰） -->
 			<view class="auth__agree">
 				<view class="auth__agree-tap" @click="agree = !agree">
 					<checkbox style="transform:scale(0.6);pointer-events:none" :checked="agree" color="#2F8FE5" />
@@ -64,16 +70,6 @@
 
 			<!-- 登录 -->
 			<button class="auth__submit" form-type="submit">登录</button>
-
-			<!-- 切换登录方式 -->
-			<view class="auth__or">
-				<view class="auth__or-line"></view>
-				<text class="auth__or-text">或</text>
-				<view class="auth__or-line"></view>
-			</view>
-			<view class="auth__alt" @click="changeLogintype">
-				{{ logintype ? '使用密码登录' : '使用验证码登录' }}
-			</view>
 		</form>
 
 		<!-- 底部 -->

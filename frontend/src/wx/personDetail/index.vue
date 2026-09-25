@@ -1,11 +1,10 @@
 <template>
 	<view class="bgColor">
-		<view class="xw-tool-list">
-			<view class="xw-tool-list-content">
-				<view class="xw-tool-item">
-					<text class="xw-tool-text">头像</text>
-					<zmm-upload-avatar v-model="avatar" @change="avatarChange"></zmm-upload-avatar>
-				</view>
+		<view class="msm-gap"></view>
+		<view class="msm-card avatar-card">
+			<view class="avatar-card__item">
+				<text class="avatar-card__label">头像</text>
+				<zmm-upload-avatar v-model="avatar" @change="avatarChange"></zmm-upload-avatar>
 			</view>
 		</view>
 		<tool-list-wx :list="list1" @itemClick="itemClick"></tool-list-wx>
@@ -153,34 +152,27 @@
 	    left: 0;
 	    right: 0;
 	    bottom: 0;
-	    background: #EDEDED;
+	    background: var(--msm-background, #F7F9FA);
 	    z-index: -1;
 		overflow: auto;
 	  }
 	/* #endif */
 	/* #ifdef H5 */
 	page{
-		background: #EDEDED;
+		background: var(--msm-background, #F7F9FA);
 	}
 	/* #endif */
-	.xw-tool-list {
-		display: flex;
-		flex-direction: column;
-		background-color: #ffffff;
-		border-bottom: 1px #eee solid;
-	}
-	
-	.xw-tool-item {
+	.avatar-card__item {
 		display: flex;
 		flex-direction: row;
 		align-items: center;
-		padding: 26rpx 24rpx;
+		min-height: 60px;
+		padding: 8px 16px;
+		box-sizing: border-box;
 	}
-	.xw-tool-item:nth-last-child(1) {
-		border: none;
-	}
-	
-	.xw-tool-text {
+	.avatar-card__label {
 		margin-right: auto;
+		font-size: 16px;
+		color: var(--msm-text, #111B21);
 	}
 </style>

@@ -220,6 +220,8 @@
 		--msm-surface: #FFFFFF;
 		--msm-surface-sunken: #F5F5F5;
 		--msm-divider: #E0E0E0;
+		/* 更浅的分割线：用于表单输入行下划线（比列表分割线再轻一档） */
+		--msm-divider-light: #EAEAEA;
 
 		/* 语义色：只用于状态，不作装饰 */
 		--msm-success: #388E3C;
@@ -766,13 +768,15 @@
 	/* ============================================================
 	   10. 按钮
 	   ------------------------------------------------------------
-	   主按钮 = 墨黑 #111B21（不是品牌蓝！蓝色只做焦点，不做大面积色块）
+	   主按钮 = 品牌蓝 #2F8FE5
+	   （2026-09-25 调整：原先用墨黑 #111B21，实测「纯黑太重」，
+	     改为品牌蓝以降低视觉重量；墨黑现在只用于标题与正文）
 	   ============================================================ */
 	.msm-btn {
 		height: 48px;
 		padding: 0 24px;
 		border-radius: var(--msm-radius-md);
-		background: var(--msm-ink);
+		background: var(--msm-primary);
 		color: #FFFFFF;
 		font-size: 16px;
 		font-weight: 600;
@@ -782,18 +786,18 @@
 	}
 
 	.msm-btn:active {
-		background: var(--msm-ink-dark);
+		background: var(--msm-primary-dark);
 	}
 
 	.msm-btn--block {
 		width: 100%;
 	}
 
-	/* 幽灵按钮：白底 + 1px 边框 + 墨黑文字 */
+	/* 幽灵按钮：白底 + 1px 深色描边 + 深色文字（次要行动，视觉重量最轻） */
 	.msm-btn--ghost {
-		background: var(--msm-surface);
-		color: var(--msm-ink);
-		border: 1px solid var(--msm-divider);
+		background: transparent;
+		color: var(--msm-text);
+		border: 1px solid var(--msm-text);
 	}
 
 	.msm-btn--ghost:active {
