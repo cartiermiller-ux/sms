@@ -1,0 +1,64 @@
+@import '@/uni_modules/uni-scss/variables.scss';
+
+/* ============================================================
+   Msm Design Tokens
+   Simple. Social. Messaging.
+   ------------------------------------------------------------
+   这里是 SCSS 变量（编译期），可在任意组件的 <style lang="scss"> 里直接用。
+   运行期的 CSS 自定义属性（--msm-*）定义在 App.vue 的全局样式里，
+   两者数值必须保持一致。
+   ============================================================ */
+
+/* ---------- 品牌主色 ---------- */
+$msm-primary:        #2F8FE5;   // Msm Blue
+$msm-primary-dark:   #1677C8;
+$msm-primary-light:  #EAF4FD;   // 浅色底（选中态背景、标签底色）
+$msm-cyan:           #18B6D9;   // 渐变辅助色
+$msm-gradient:       linear-gradient(135deg, #2F8FE5 0%, #18B6D9 100%);
+
+/* ---------- 文字 ---------- */
+$msm-text:           #111B21;
+$msm-text-secondary: #667781;
+$msm-text-muted:     #8696A0;
+$msm-text-inverse:   #FFFFFF;
+
+/* ---------- 背景与分隔 ---------- */
+$msm-background:     #F7F9FA;
+$msm-surface:        #FFFFFF;
+$msm-surface-sunken: #F0F4F6;
+$msm-divider:        #E9EDEF;
+
+/* ---------- 语义色 ---------- */
+$msm-success:        #21C063;
+$msm-danger:         #EA4335;
+$msm-warning:        #F5A623;
+
+/* ---------- 圆角 ---------- */
+$msm-radius-sm:      10px;
+$msm-radius-md:      16px;
+$msm-radius-lg:      24px;
+$msm-radius-pill:    999px;
+
+/* ---------- 间距（8pt 栅格） ---------- */
+$msm-space-xs:       4px;
+$msm-space-sm:       8px;
+$msm-space-md:       12px;
+$msm-space-lg:       16px;
+$msm-space-xl:       24px;
+$msm-space-2xl:      32px;
+
+/* ---------- 字号 ---------- */
+$msm-font-display:   28px;
+$msm-font-title:     20px;
+$msm-font-heading:   17px;
+$msm-font-body:      15px;
+$msm-font-note:      13px;
+$msm-font-caption:   11px;
+
+/* ---------- 阴影 ---------- */
+$msm-shadow-sm:      0 1px 2px rgba(17, 27, 33, 0.06);
+$msm-shadow-md:      0 2px 12px rgba(17, 27, 33, 0.08);
+$msm-shadow-lg:      0 8px 28px rgba(47, 143, 229, 0.18);
+
+/* ---------- 页面顶部安全区（自定义导航栏用） ---------- */
+$msm-status-bar:     var(--status-bar-height, 0px);

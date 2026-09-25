@@ -1,0 +1,119 @@
+# 服务器环境配置（宝塔 / Ubuntu）
+# 启动方式: java -jar chat-api.jar --spring.profiles.active=server
+#
+# 与 dev 的差异：
+#   - 文件存储走 Linux 路径
+#   - 数据库换成专用账号 msm，并开启 allowPublicKeyRetrieval（MySQL 8.4 用 caching_sha2_password，
+#     在 useSSL=false 的非加密连接下必须允许获取公钥，否则报 "Public Key Retrieval is not allowed"）
+#   - 关闭 CORS：H5 与接口同源（都经 Nginx 80 端口），不再跨域
+#   - 关闭 SQL 打印、日志降为 info，减少小内存服务器的开销
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  undertow:
+    io-threads: 4
+    worker-threads: 128
+    buffer-size: 512
+    direct-buffers: true
+
+# 项目相关配置
+platform:
+  # 本地上传根目录（Linux 路径）
+  rootPath: /www/wwwroot/msm/upload
+  version: 1.2.0
+  logPath: ./logs
+  # token超时时间（分钟）默认7天
+  timeout: 10080
+  # 短信开关（N关Y开）
+  sms: N
+  # 「附近的人」搜索半径（公里）。果敢老街到临沧市区约 130 公里，
+  # 设为 100 时两地互相看不到，这里放宽到 500
+  nearRadius: 500
+  # 跨域开关：同源部署，不需要
+  cors: N
+
+# 文件上传：本地磁盘
+upload:
+  uploadType: local
+  # 对外访问前缀。必须与实际访问协议一致：
+  # 站点已上 HTTPS，这里若写 http:// 会被浏览器当作「混合内容」拦掉
+  # （表现为头像、聊天图片、朋友圈图片全部显示不出来）
+  serverUrl: https://imessage.uno/preview/
+  accessKey:
+  secretKey:
+  bucket:
+  # uploadType=local 时 region 复用为落盘目录，需与 platform.rootPath 相同
+  region: /www/wwwroot/msm/upload
+  post:
+
+# 实时语音/视频（未接入，留空）
+trtc:
+  appId: xxxxxxxxxx
+  expire: 604800
+  secret: xxxxxxxxxxxxxxxxxxxx
+
+# 高德地图（未接入，留空）
+amap:
+  key: xxxxxxxxxxxxxxxxxxxxx
+
+# 腾讯nlp（未接入，留空）
+tencent:
+  appId: xxxxxxxxxxxxxxxx
+  appKey: xxxxxxxxxxxxxxxxxxxxxx
+  appSecret: xxxxxxxxxxxxxxxxxxxxxxxxxx
+
+spring:
+  messages:
+    basename: i18n/messages
+  mvc:
+    throw-exception-if-no-handler-found: true
+  resources:
+    add-mappings: false
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+
+  # ShardingSphere 数据源
+  shardingsphere:
+    datasource:
+      names: master
+      master:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://127.0.0.1:3306/boot-im?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true&verifyServerCertificate=false&serverTimezone=GMT%2B8&allowMultiQueries=true
+        username: msm
+        password: <REDACTED_DB_PASSWORD>
+        # 小内存服务器限制连接池
+        maximum-pool-size: 8
+        minimum-idle: 2
+        connection-timeout: 30000
+    props:
+      sql:
+        show: false
+    sharding:
+      default-data-source-name: master
+
+  # redis 配置
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+    password:
+    <REDACTED_DB_PASSWORD>
+    lettuce:
+      pool:
+        min-idle: 0
+        max-idle: 8
+        max-active: 8
+        max-wait: -1ms
+
+# 日志配置（生产降噪）
+logging:
+  level:
+    com.platform: info
+    org.springframework: warn
+  file:
+    name: ./logs/chat-api.log

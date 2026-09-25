@@ -1,0 +1,244 @@
+/* ============================================================
+   Msm 认证页共用样式（Compact Density）
+   —— 对齐 Telegram 的紧凑节奏：
+      内容顶对齐、不被拉伸；控件 52px；字段间距 14px；左右边距 20px
+   ============================================================ */
+
+.auth {
+	min-height: 100vh;
+	background: #ffffff;
+	display: flex;
+	flex-direction: column;
+	padding: calc(var(--status-bar-height, 0px) + 4px) 20px 20px;
+	box-sizing: border-box;
+}
+
+/* ---------- 返回 ---------- */
+.auth__nav {
+	height: 42px;
+	display: flex;
+	align-items: center;
+}
+
+.auth__back {
+	width: 36px;
+	height: 36px;
+	margin-left: -6px;
+	border-radius: 999px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.auth__back--active {
+	background: #F0F4F6;
+}
+
+/* ---------- 品牌头（压缩到 ~100px）---------- */
+.auth__head {
+	padding: 6px 0 18px;
+}
+
+.auth__logo {
+	font-size: 22px;
+	font-weight: 700;
+	letter-spacing: -.4px;
+	line-height: 1;
+}
+
+.auth__logo-m {
+	color: #111B21;
+}
+
+.auth__logo-sm {
+	color: #2F8FE5;
+}
+
+.auth__title {
+	margin-top: 14px;
+	font-size: 24px;
+	font-weight: 700;
+	color: #111B21;
+	letter-spacing: -.2px;
+	line-height: 1.15;
+}
+
+.auth__sub {
+	margin-top: 4px;
+	font-size: 13px;
+	color: #8696A0;
+	line-height: 1.3;
+}
+
+/* ---------- 表单（关键：不要 flex:1，否则内容会被拉伸铺满整屏）---------- */
+.auth__form {
+	flex: none;
+}
+
+.field {
+	margin-bottom: 14px;
+}
+
+.field__label {
+	font-size: 12.5px;
+	color: #667781;
+	margin-bottom: 6px;
+	padding-left: 2px;
+}
+
+.field__box {
+	display: flex;
+	align-items: center;
+	height: 52px;
+	padding: 0 12px;
+	background: #F7F9FA;
+	border: 1px solid #E9EDEF;
+	border-radius: 12px;
+	box-sizing: border-box;
+}
+
+.field__cc {
+	font-size: 15px;
+	font-weight: 600;
+	color: #111B21;
+}
+
+.field__sep {
+	width: 1px;
+	height: 18px;
+	margin: 0 10px;
+	background: #DDE3E7;
+}
+
+.field__input {
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	font-size: 15px;
+	color: #111B21;
+	background: transparent;
+}
+
+.field__ph {
+	color: #A9B4BC;
+	font-size: 14.5px;
+}
+
+.field__suffix {
+	padding-left: 8px;
+	display: flex;
+	align-items: center;
+}
+
+.field__code {
+	padding-left: 10px;
+	font-size: 13.5px;
+	font-weight: 600;
+	color: #2F8FE5;
+}
+
+.field__code--dim {
+	color: #A9B4BC;
+	font-weight: 400;
+}
+
+.auth__forgot {
+	text-align: right;
+	font-size: 12.5px;
+	color: #2F8FE5;
+	padding: 0 2px 2px;
+	margin-top: -6px;
+}
+
+/* ---------- 协议 ---------- */
+.auth__agree {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	margin: 10px 0 0;
+}
+
+.auth__agree-tap {
+	display: flex;
+	align-items: center;
+	min-height: 38px;
+	padding-right: 2px;
+}
+
+.auth__agree-text {
+	font-size: 12px;
+	color: #667781;
+}
+
+.auth__agree-link {
+	font-size: 12px;
+	color: #2F8FE5;
+	padding: 8px 0;
+}
+
+/* ---------- 主按钮 ---------- */
+.auth__submit {
+	margin-top: 8px;
+	height: 52px;
+	line-height: 52px;
+	border: none;
+	border-radius: 999px;
+	background: #2F8FE5;
+	color: #ffffff;
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: .5px;
+	box-shadow: 0 6px 16px rgba(47, 143, 229, .26);
+}
+
+.auth__submit::after {
+	border: none;
+}
+
+/* ---------- 分隔 / 切换 ---------- */
+.auth__or {
+	display: flex;
+	align-items: center;
+	margin: 16px 0 10px;
+}
+
+.auth__or-line {
+	flex: 1;
+	height: 1px;
+	background: #E9EDEF;
+}
+
+.auth__or-text {
+	margin: 0 10px;
+	font-size: 11.5px;
+	color: #A9B4BC;
+}
+
+.auth__alt {
+	text-align: center;
+	font-size: 13.5px;
+	font-weight: 500;
+	color: #2F8FE5;
+	padding: 4px;
+}
+
+/* ---------- 底部（紧接内容，不做拉伸）---------- */
+.auth__foot {
+	margin-top: 22px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding-top: 16px;
+}
+
+.auth__foot-dim {
+	font-size: 13.5px;
+	color: #8696A0;
+}
+
+.auth__foot-strong {
+	font-size: 13.5px;
+	font-weight: 600;
+	color: #2F8FE5;
+	padding: 10px 6px;
+}
