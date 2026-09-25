@@ -1,4 +1,4 @@
-﻿<#
+<#
     用 Android SDK 自带的 build-tools 直接打包 APK（不需要 Gradle、不需要 DCloud 账号）
     产物：C:\im-local\msm-android\build\Msm.apk
 
@@ -117,14 +117,18 @@ $r = Invoke-Native "$BT\zipalign.exe" @('-f', '-p', '4', "$outDir\unsigned.apk",
 Write-Host "[6/8] 已对齐"
 
 # ---------- 8) 签名 ----------
+# 签名密码从环境变量读取，切勿写死在脚本里：
+#     $env:MSM_KS_PASSWORD = '你的证书密码'
+# 未设置时用占位值，仅够本地跑通流程；正式发布请务必自行设置。
+$ksPass = if ($env:MSM_KS_PASSWORD) { $env:MSM_KS_PASSWORD } else { 'CHANGE_ME_KS_PASSWORD' }
 $ks = "$WORK\msm.keystore"
 if (-not (Test-Path $ks)) {
     $ktArgs = @('-genkeypair', '-keystore', $ks, '-alias', 'msm', '-keyalg', 'RSA', '-keysize', '2048',
-                '-validity', '10000', '-storepass', 'CHANGE_ME_KS_PASSWORD', '-keypass', 'CHANGE_ME_KS_PASSWORD',
+                '-validity', '10000', '-storepass', $ksPass, '-keypass', $ksPass,
                 '-dname', 'CN=Msm, OU=Dev, O=Msm, L=Lincang, ST=Yunnan, C=CN')
     $r = Invoke-Native "$JDK\bin\keytool.exe" $ktArgs; if ($r.Code -ne 0) { Show-Fail $r "keytool" }
 }
-$signArgs = @('sign', '--ks', $ks, '--ks-pass', 'pass:CHANGE_ME_KS_PASSWORD', '--key-pass', 'pass:CHANGE_ME_KS_PASSWORD',
+$signArgs = @('sign', '--ks', $ks, '--ks-pass', "pass:$ksPass", '--key-pass', "pass:$ksPass",
               '--ks-key-alias', 'msm', '--out', "$outDir\Msm.apk", "$outDir\aligned.apk")
 $r = Invoke-Native "$BT\apksigner.bat" $signArgs; if ($r.Code -ne 0) { Show-Fail $r "apksigner" }
 Write-Host "[7/8] 签名完成"

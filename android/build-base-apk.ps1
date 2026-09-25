@@ -1,4 +1,4 @@
-﻿<#
+<#
     把 uni-app 安卓标准基座"灌"成独立 App APK
     ────────────────────────────────────────────
     原理：基座从 assets/apps/<appid>/www/ 加载项目，dcloud_control.xml 是应用清单。
@@ -113,14 +113,18 @@ if ($r.Code -ne 0) { Show-Fail $r "zipalign" }
 Write-Host "[4/6] 已对齐"
 
 # ---------- 6) 签名 ----------
+# 签名密码从环境变量读取，切勿写死在脚本里：
+#     $env:MSM_KS_PASSWORD = '你的证书密码'
+# 未设置时用占位值，仅够本地跑通流程；正式发布请务必自行设置。
+$ksPass = if ($env:MSM_KS_PASSWORD) { $env:MSM_KS_PASSWORD } else { 'CHANGE_ME_KS_PASSWORD' }
 $ks = "$WORK\msm.keystore"
 if (-not (Test-Path $ks)) {
     $r = Invoke-Native "$JDK\bin\keytool.exe" @('-genkeypair','-keystore',$ks,'-alias','msm','-keyalg','RSA','-keysize','2048',
-        '-validity','10000','-storepass','CHANGE_ME_KS_PASSWORD','-keypass','CHANGE_ME_KS_PASSWORD',
+        '-validity','10000','-storepass',$ksPass,'-keypass',$ksPass,
         '-dname','CN=Msm, OU=Dev, O=Msm, L=Lincang, ST=Yunnan, C=CN')
     if ($r.Code -ne 0) { Show-Fail $r "keytool" }
 }
-$r = Invoke-Native "$BT\apksigner.bat" @('sign','--ks',$ks,'--ks-pass','pass:CHANGE_ME_KS_PASSWORD','--key-pass','pass:CHANGE_ME_KS_PASSWORD',
+$r = Invoke-Native "$BT\apksigner.bat" @('sign','--ks',$ks,'--ks-pass',"pass:$ksPass",'--key-pass',"pass:$ksPass",
     '--ks-key-alias','msm','--out',"$WORK\Msm-base.apk","$WORK\aligned.apk")
 if ($r.Code -ne 0) { Show-Fail $r "apksigner" }
 Write-Host "[5/6] 签名完成"
